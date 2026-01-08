@@ -10,14 +10,14 @@ A Windows desktop application for converting files to Base64 encoding.
 
 ## Tech Stack
 
-- **Language**: C# (.NET 9)
+- **Language**: C# (.NET 10)
 - **Framework**: WPF (Windows Presentation Foundation)
 - **Target Platform**: Windows (x64)
 
 ## Build and Run Locally
 
 Requirements:
-- .NET 9 SDK
+- .NET 10 SDK
 
 ```bash
 # Clone or download the repository
@@ -38,9 +38,13 @@ dotnet run
 dotnet publish -c Release --os win --arch x64 --self-contained
 ```
 
-### Framework-Dependent (requires .NET 9 installed on user's computer)
+### Framework-Dependent (requires .NET 10 installed on user's computer)
 ```bash
 dotnet publish -c Release --os win --arch x64 --no-self-contained
 ```
 
-Output will be in `bin/Release/net9.0-windows/win-x64/publish/`
+Output will be in `bin/Release/net10.0-windows/win-x64/publish/`
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
