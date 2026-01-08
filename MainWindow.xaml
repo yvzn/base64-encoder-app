@@ -12,6 +12,27 @@ Title="Base64 Converter" Height="550" Width="800">
                            Storyboard.TargetProperty="Angle"
                            From="0" To="360" Duration="0:0:1"/>
         </Storyboard>
+        
+        <!-- Enhanced focus visual style for better visibility -->
+        <Style x:Key="EnhancedFocusButtonStyle" TargetType="Button">
+            <Setter Property="FocusVisualStyle">
+                <Setter.Value>
+                    <Style>
+                        <Setter Property="Control.Template">
+                            <Setter.Value>
+                                <ControlTemplate>
+                                    <Rectangle Margin="-5" 
+                                             StrokeThickness="3" 
+                                             Stroke="#FFB300"
+                                             StrokeDashArray="1 1"
+                                             SnapsToDevicePixels="True"/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
     <Grid>
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Width="700" Margin="20">
@@ -30,6 +51,7 @@ Title="Base64 Converter" Height="550" Width="800">
                         Width="120"
                         Margin="0,0,10,0"
                         FontSize="16"
+                        Style="{StaticResource EnhancedFocusButtonStyle}"
                         Click="SelectFileButton_Click"/>
                 
                 <TextBlock x:Name="FileNameTextBlock" 
@@ -70,6 +92,7 @@ Title="Base64 Converter" Height="550" Width="800">
                         Margin="0"
                         FontSize="16"
                         IsEnabled="False"
+                        Style="{StaticResource EnhancedFocusButtonStyle}"
                         Click="ConvertButton_Click"/>
             </Grid>
             
@@ -95,6 +118,7 @@ Title="Base64 Converter" Height="550" Width="800">
                         Margin="0,0,10,0"
                         FontSize="12"
                         IsEnabled="False"
+                        Style="{StaticResource EnhancedFocusButtonStyle}"
                         Click="SaveToFileButton_Click"/>
                 
                 <Button x:Name="CopyButton"
@@ -104,6 +128,7 @@ Title="Base64 Converter" Height="550" Width="800">
                         Width="140"
                         FontSize="12"
                         IsEnabled="False"
+                        Style="{StaticResource EnhancedFocusButtonStyle}"
                         Click="CopyButton_Click"/>
             </Grid>
             

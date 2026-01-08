@@ -18,6 +18,7 @@ namespace Base64Utils
         public MainWindow()
         {
             InitializeComponent();
+            ShowcaseButton(SelectFileButton);
         }
 
         private void StatusBarText_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -40,6 +41,49 @@ namespace Base64Utils
         private void ClosePopupButton_Click(object sender, RoutedEventArgs e)
         {
             StatusMessagePopup.IsOpen = false;
+        }
+
+        private void ShowcaseButton(System.Windows.Controls.Button button)
+        {
+            // Reset all buttons first
+            StopShowcase();
+
+            // Add visual emphasis with styling (color only, no animation)
+            button.FontWeight = FontWeights.Bold;
+            
+            if (button == SelectFileButton || button == ConvertButton)
+            {
+                button.Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(0, 120, 212)); // Accent blue
+                button.Foreground = System.Windows.Media.Brushes.White;
+            }
+            else if (button == CopyButton)
+            {
+                button.Background = new System.Windows.Media.SolidColorBrush(
+                    System.Windows.Media.Color.FromRgb(16, 124, 16)); // Success green
+                button.Foreground = System.Windows.Media.Brushes.White;
+            }
+            
+            // Set keyboard focus to the highlighted button
+            if (button.IsEnabled)
+            {
+                button.Focus();
+            }
+        }
+
+        private void StopShowcase()
+        {
+            // Reset all buttons to default appearance
+            ResetButtonAppearance(SelectFileButton);
+            ResetButtonAppearance(ConvertButton);
+            ResetButtonAppearance(CopyButton);
+        }
+
+        private void ResetButtonAppearance(System.Windows.Controls.Button button)
+        {
+            button.FontWeight = FontWeights.Normal;
+            button.ClearValue(System.Windows.Controls.Control.BackgroundProperty);
+            button.ClearValue(System.Windows.Controls.Control.ForegroundProperty);
         }
 
         private void ShowStatusMessage(string message, bool isError = false)
@@ -82,6 +126,9 @@ namespace Base64Utils
                 _fullBase64String = null;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
+                
+                // Showcase the Convert button as the next action
+                ShowcaseButton(ConvertButton);
             }
             else
             {
@@ -92,6 +139,9 @@ namespace Base64Utils
                 _fullBase64String = null;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
+                
+                // Showcase the Select File button again
+                ShowcaseButton(SelectFileButton);
             }
         }
 
@@ -104,6 +154,9 @@ namespace Base64Utils
             }
 
             ShowStatusMessage("Converting file to Base64...");
+
+            // Stop showcasing during conversion
+            StopShowcase();
 
             var spinnerAnimation = (Storyboard)this.Resources["SpinnerAnimation"];
             spinnerAnimation.Begin();
@@ -133,6 +186,9 @@ namespace Base64Utils
                 CopyButton.IsEnabled = true;
                 SaveToFileButton.IsEnabled = true;
                 ShowStatusMessage($"Conversion complete. Generated {base64String.Length:N0} characters.");
+                
+                // Showcase the Copy button as the next action
+                ShowcaseButton(CopyButton);
             }
             catch (Exception ex)
             {
@@ -140,6 +196,9 @@ namespace Base64Utils
                 _fullBase64String = null;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
+                
+                // Showcase Convert button again to retry
+                ShowcaseButton(ConvertButton);
             }
             finally
             {
@@ -159,13 +218,20 @@ namespace Base64Utils
                     Clipboard.SetText(_fullBase64String);
 
                     string originalText = CopyButton.Content.ToString() ?? "Copy to Clipboard";
+                    
+                    // Temporarily reset button appearance for "Copied!" feedback
+                    ResetButtonAppearance(CopyButton);
                     CopyButton.Content = "Copied!";
-                    CopyButton.IsEnabled = false;
+                    CopyButton.Background = new System.Windows.Media.SolidColorBrush(
+                        System.Windows.Media.Color.FromRgb(16, 124, 16)); // Success green
+                    CopyButton.Foreground = System.Windows.Media.Brushes.White;
+                    CopyButton.FontWeight = FontWeights.Bold;
 
                     await Task.Delay(1500);
 
                     CopyButton.Content = originalText;
-                    CopyButton.IsEnabled = true;
+                    // Restore the showcase highlighting
+                    ShowcaseButton(CopyButton);
                     ShowStatusMessage("Base64 string copied to clipboard successfully.");
                 }
                 catch (Exception ex)
