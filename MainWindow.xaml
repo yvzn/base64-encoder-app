@@ -22,8 +22,8 @@ Title="Base64 Converter" Height="550" Width="800">
                             <Setter.Value>
                                 <ControlTemplate>
                                     <Rectangle Margin="-5" 
-                                             StrokeThickness="3" 
-                                             Stroke="#FFB300"
+                                             StrokeThickness="2" 
+                                             Stroke="#999999"
                                              StrokeDashArray="1 1"
                                              SnapsToDevicePixels="True"/>
                                 </ControlTemplate>

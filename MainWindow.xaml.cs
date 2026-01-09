@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.IO;
+using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media.Animation;
 
@@ -11,7 +12,7 @@ namespace Base64Utils
     public partial class MainWindow : Window
     {
         private string? _selectedFilePath;
-        private string? _fullBase64String;
+        private long _fileSize;
         private string? _fullStatusMessage;
         private const int MaxDisplayLength = 10000;
 
@@ -123,7 +124,7 @@ namespace Base64Utils
                 FileNameTextBlock.Text = $"Selected file: {fileName}";
                 ConvertButton.IsEnabled = true;
                 ResultTextBox.Text = string.Empty;
-                _fullBase64String = null;
+                _fileSize = 0;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
                 
@@ -136,7 +137,7 @@ namespace Base64Utils
                 FileNameTextBlock.Text = "No file selected.";
                 ConvertButton.IsEnabled = false;
                 ResultTextBox.Text = string.Empty;
-                _fullBase64String = null;
+                _fileSize = 0;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
                 
@@ -168,24 +169,39 @@ namespace Base64Utils
 
             try
             {
-                byte[] fileBytes = await File.ReadAllBytesAsync(_selectedFilePath);
-                string base64String = Convert.ToBase64String(fileBytes);
-
-                _fullBase64String = base64String;
-
-                if (base64String.Length > MaxDisplayLength)
+                FileInfo fileInfo = new FileInfo(_selectedFilePath);
+                _fileSize = fileInfo.Length;
+                
+                // Calculate how many bytes we need to read for the display preview
+                // Base64 encoding increases size by ~4/3, so we need (MaxDisplayLength * 3 / 4) bytes
+                int bytesToRead = (int)Math.Min(_fileSize, (MaxDisplayLength * 3 / 4));
+                
+                string previewBase64;
+                long estimatedBase64Length;
+                
+                using (FileStream inputFile = new FileStream(_selectedFilePath, FileMode.Open, FileAccess.Read))
+                using (CryptoStream base64Stream = new CryptoStream(inputFile, new ToBase64Transform(), CryptoStreamMode.Read))
                 {
-                    string truncated = base64String.Substring(0, MaxDisplayLength);
-                    ResultTextBox.Text = $"{truncated}\n\n[Truncated - Full length: {base64String.Length:N0} characters. Click 'Copy to Clipboard' to copy the complete Base64 string.]";
+                    byte[] buffer = new byte[MaxDisplayLength];
+                    int bytesRead = await base64Stream.ReadAsync(buffer, 0, MaxDisplayLength);
+                    previewBase64 = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
+                }
+                
+                // Calculate estimated full Base64 length
+                estimatedBase64Length = ((_fileSize + 2) / 3) * 4;
+
+                if (estimatedBase64Length > MaxDisplayLength)
+                {
+                    ResultTextBox.Text = $"{previewBase64}\n\n[Truncated - Full length: {estimatedBase64Length:N0} characters. Click 'Copy to Clipboard' to copy the complete Base64 string.]";
                 }
                 else
                 {
-                    ResultTextBox.Text = base64String;
+                    ResultTextBox.Text = previewBase64;
                 }
 
                 CopyButton.IsEnabled = true;
                 SaveToFileButton.IsEnabled = true;
-                ShowStatusMessage($"Conversion complete. Generated {base64String.Length:N0} characters.");
+                ShowStatusMessage($"Conversion complete. Generated {estimatedBase64Length:N0} characters.");
                 
                 // Showcase the Copy button as the next action
                 ShowcaseButton(CopyButton);
@@ -193,7 +209,7 @@ namespace Base64Utils
             catch (Exception ex)
             {
                 ShowStatusMessage($"Error converting file: {ex.Message}. Please try again or select another file.", isError: true);
-                _fullBase64String = null;
+                _fileSize = 0;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
                 
@@ -211,11 +227,13 @@ namespace Base64Utils
 
         private async void CopyButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(_fullBase64String))
+            if (!string.IsNullOrEmpty(_selectedFilePath) && _fileSize > 0)
             {
                 try
                 {
-                    Clipboard.SetText(_fullBase64String);
+                    // Convert the entire file to Base64
+                    string fullBase64String = await ConvertFileToBase64Async(_selectedFilePath);
+                    Clipboard.SetText(fullBase64String);
 
                     string originalText = CopyButton.Content.ToString() ?? "Copy to Clipboard";
                     
@@ -243,7 +261,7 @@ namespace Base64Utils
 
         private async void SaveToFileButton_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(_fullBase64String))
+            if (!string.IsNullOrEmpty(_selectedFilePath) && _fileSize > 0)
             {
                 SaveFileDialog saveFileDialog = new SaveFileDialog
                 {
@@ -257,7 +275,9 @@ namespace Base64Utils
                 {
                     try
                     {
-                        await File.WriteAllTextAsync(saveFileDialog.FileName, _fullBase64String);
+                        // Convert the entire file to Base64
+                        string fullBase64String = await ConvertFileToBase64Async(_selectedFilePath);
+                        await File.WriteAllTextAsync(saveFileDialog.FileName, fullBase64String);
 
                         string originalText = SaveToFileButton.Content.ToString() ?? "Save to File";
                         SaveToFileButton.Content = "Saved!";
@@ -274,6 +294,18 @@ namespace Base64Utils
                         ShowStatusMessage($"Error saving to file: {ex.Message}. Please try again or select another location.", isError: true);
                     }
                 }
+            }
+        }
+
+        private async Task<string> ConvertFileToBase64Async(string filePath)
+        {
+            using (FileStream inputFile = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            using (MemoryStream outputStream = new MemoryStream())
+            using (CryptoStream base64Stream = new CryptoStream(outputStream, new ToBase64Transform(), CryptoStreamMode.Write))
+            {
+                await inputFile.CopyToAsync(base64Stream);
+                base64Stream.FlushFinalBlock();
+                return System.Text.Encoding.ASCII.GetString(outputStream.ToArray());
             }
         }
     }
