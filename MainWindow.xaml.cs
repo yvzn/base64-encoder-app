@@ -44,6 +44,44 @@ namespace Base64Utils
             StatusMessagePopup.IsOpen = false;
         }
 
+        private void StatusBarText_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter || e.Key == System.Windows.Input.Key.Space)
+            {
+                if (!string.IsNullOrEmpty(_fullStatusMessage) && _fullStatusMessage != "Ready")
+                {
+                    if (StatusMessagePopup.IsOpen)
+                    {
+                        StatusMessagePopup.IsOpen = false;
+                    }
+                    else
+                    {
+                        ExpandedMessageText.Text = _fullStatusMessage;
+                        ExpandedMessageText.Foreground = StatusBarText.Foreground;
+                        StatusMessagePopup.IsOpen = true;
+                    }
+                }
+                e.Handled = true;
+            }
+        }
+
+        private void StatusMessagePopup_Opened(object sender, EventArgs e)
+        {
+            // Set focus to the close button when popup opens for keyboard accessibility
+            ClosePopupButton.Focus();
+        }
+
+        private void ClosePopupButton_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Escape)
+            {
+                StatusMessagePopup.IsOpen = false;
+                // Return focus to the status bar text
+                StatusBarText.Focus();
+                e.Handled = true;
+            }
+        }
+
         private void ShowcaseButton(System.Windows.Controls.Button button)
         {
             // Reset all buttons first
@@ -107,6 +145,12 @@ namespace Base64Utils
             StatusBarText.Foreground = isError ? 
                 new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(204, 0, 0)) : 
                 new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
+            
+            // Move focus to status bar when an error occurs for accessibility
+            if (isError)
+            {
+                StatusBarText.Focus();
+            }
         }
 
         private void SelectFileButton_Click(object sender, RoutedEventArgs e)

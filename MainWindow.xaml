@@ -151,13 +151,16 @@ Title="Base64 Converter" Height="550" Width="800">
                                FontSize="14"
                                TextTrimming="CharacterEllipsis"
                                Cursor="Hand"
+                               Focusable="True"
                                MouseLeftButtonDown="StatusBarText_MouseLeftButtonDown"
-                               ToolTip="Click to expand message"/>
+                               KeyDown="StatusBarText_KeyDown"
+                               ToolTip="Press Enter or Space to expand message"/>
                     <Popup x:Name="StatusMessagePopup"
                            PlacementTarget="{Binding ElementName=StatusBarText}"
                            Placement="Top"
                            AllowsTransparency="True"
-                           StaysOpen="True">
+                           StaysOpen="True"
+                           Opened="StatusMessagePopup_Opened">
                         <Border Background="White" 
                                 BorderBrush="#FFCCCCCC" 
                                 BorderThickness="1"
@@ -186,7 +189,9 @@ Title="Base64 Converter" Height="550" Width="800">
                                         FontSize="12"
                                         FontWeight="Bold"
                                         Cursor="Hand"
-                                        Click="ClosePopupButton_Click">
+                                        ToolTip="Press Escape or click to close"
+                                        Click="ClosePopupButton_Click"
+                                        KeyDown="ClosePopupButton_KeyDown">
                                     <Button.Style>
                                         <Style TargetType="Button">
                                             <Setter Property="Foreground" Value="#FF999999"/>
