@@ -3,6 +3,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
 
 namespace Base64Utils
 {
@@ -11,14 +12,26 @@ namespace Base64Utils
     /// </summary>
     public partial class MainWindow : Window
     {
+        private enum Mode
+        {
+            Encode,
+            Decode
+        }
+
         private string? _selectedFilePath;
         private long _fileSize;
         private string? _fullStatusMessage;
+        private bool _lastStatusWasError;
+        private Mode _currentMode = Mode.Encode;
+        private readonly SolidColorBrush _encodeAccent = new SolidColorBrush(Color.FromRgb(0, 120, 212));
+        private readonly SolidColorBrush _decodeAccent = new SolidColorBrush(Color.FromRgb(16, 124, 16));
         private const int MaxDisplayLength = 10000;
 
         public MainWindow()
         {
             InitializeComponent();
+            ApplyModeAccent();
+            ShowStatusMessage("Ready in Encode mode.");
             ShowcaseButton(SelectFileButton);
         }
 
@@ -89,19 +102,9 @@ namespace Base64Utils
 
             // Add visual emphasis with styling (color only, no animation)
             button.FontWeight = FontWeights.Bold;
-            
-            if (button == SelectFileButton || button == ConvertButton)
-            {
-                button.Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(0, 120, 212)); // Accent blue
-                button.Foreground = System.Windows.Media.Brushes.White;
-            }
-            else if (button == CopyButton)
-            {
-                button.Background = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromRgb(16, 124, 16)); // Success green
-                button.Foreground = System.Windows.Media.Brushes.White;
-            }
+            var accent = GetAccentBrush();
+            button.Background = accent;
+            button.Foreground = System.Windows.Media.Brushes.White;
             
             // Set keyboard focus to the highlighted button
             if (button.IsEnabled)
@@ -131,6 +134,7 @@ namespace Base64Utils
             string messageWithTimestamp = $"[{timestamp}] {message}";
             
             _fullStatusMessage = messageWithTimestamp;
+            _lastStatusWasError = isError;
             
             const int maxStatusBarLength = 100;
             if (messageWithTimestamp.Length > maxStatusBarLength)
@@ -144,7 +148,8 @@ namespace Base64Utils
             
             StatusBarText.Foreground = isError ? 
                 new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(204, 0, 0)) : 
-                new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(51, 51, 51));
+                GetAccentBrush();
+            StatusBarAccent.Background = GetAccentBrush();
             
             // Move focus to status bar when an error occurs for accessibility
             if (isError)
@@ -280,12 +285,12 @@ namespace Base64Utils
                     Clipboard.SetText(fullBase64String);
 
                     string originalText = CopyButton.Content.ToString() ?? "Copy to Clipboard";
+                    var accent = GetAccentBrush();
                     
                     // Temporarily reset button appearance for "Copied!" feedback
                     ResetButtonAppearance(CopyButton);
                     CopyButton.Content = "Copied!";
-                    CopyButton.Background = new System.Windows.Media.SolidColorBrush(
-                        System.Windows.Media.Color.FromRgb(16, 124, 16)); // Success green
+                    CopyButton.Background = accent;
                     CopyButton.Foreground = System.Windows.Media.Brushes.White;
                     CopyButton.FontWeight = FontWeights.Bold;
 
@@ -350,6 +355,40 @@ namespace Base64Utils
                 await inputFile.CopyToAsync(base64Stream);
                 base64Stream.FlushFinalBlock();
                 return System.Text.Encoding.ASCII.GetString(outputStream.ToArray());
+            }
+        }
+
+        private SolidColorBrush GetAccentBrush()
+        {
+            return _currentMode == Mode.Encode ? _encodeAccent : _decodeAccent;
+        }
+
+        private void ApplyModeAccent()
+        {
+            var accent = GetAccentBrush();
+            StatusBarAccent.Background = accent;
+
+            if (!_lastStatusWasError)
+            {
+                StatusBarText.Foreground = accent;
+            }
+        }
+
+        private void ModeTabControl_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (ModeTabControl.SelectedItem == DecodeTab)
+            {
+                _currentMode = Mode.Decode;
+                StopShowcase();
+                ApplyModeAccent();
+                ShowStatusMessage("Decode mode selected. Tools coming soon.");
+            }
+            else
+            {
+                _currentMode = Mode.Encode;
+                ApplyModeAccent();
+                ShowStatusMessage("Encode mode selected. Ready.");
+                ShowcaseButton(SelectFileButton);
             }
         }
     }
