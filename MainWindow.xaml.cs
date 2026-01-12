@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media.Animation;
 using System.Windows.Media;
+using System.Windows.Documents;
 
 namespace Base64Utils
 {
@@ -46,7 +47,6 @@ namespace Base64Utils
                 else
                 {
                     ExpandedMessageText.Text = _fullStatusMessage;
-                    ExpandedMessageText.Foreground = StatusBarText.Foreground;
                     StatusMessagePopup.IsOpen = true;
                 }
             }
@@ -70,7 +70,6 @@ namespace Base64Utils
                     else
                     {
                         ExpandedMessageText.Text = _fullStatusMessage;
-                        ExpandedMessageText.Foreground = StatusBarText.Foreground;
                         StatusMessagePopup.IsOpen = true;
                     }
                 }
@@ -131,24 +130,41 @@ namespace Base64Utils
         private void ShowStatusMessage(string message, bool isError = false)
         {
             string timestamp = DateTime.Now.ToString("HH:mm:ss");
-            string messageWithTimestamp = $"[{timestamp}] {message}";
+            string timestampToken = $"[{timestamp}]";
+            string messageWithTimestamp = $"{timestampToken} {message}";
             
             _fullStatusMessage = messageWithTimestamp;
             _lastStatusWasError = isError;
             
             const int maxStatusBarLength = 100;
+            StatusBarText.Inlines.Clear();
+
+            string suffix = string.Empty;
+            string content = message;
+            int baseLen = timestampToken.Length + 1; // timestamp + space
             if (messageWithTimestamp.Length > maxStatusBarLength)
             {
-                StatusBarText.Text = messageWithTimestamp.Substring(0, maxStatusBarLength) + "... (click to expand)";
+                int allowedContentLen = Math.Max(0, maxStatusBarLength - baseLen);
+                content = content.Length > allowedContentLen ? content.Substring(0, allowedContentLen) : content;
+                suffix = "... (click to expand)";
+            }
+
+            if (isError)
+            {
+                var errorBrush = new SolidColorBrush(Color.FromRgb(204, 0, 0));
+                StatusBarText.Foreground = errorBrush;
+                StatusBarText.Inlines.Add(new Run($"{timestampToken} {content}{suffix}"));
             }
             else
             {
-                StatusBarText.Text = messageWithTimestamp;
+                // Reset to neutral color for non-error state
+                StatusBarText.Foreground = new SolidColorBrush(Color.FromRgb(51, 51, 51));
+
+                var accent = GetAccentBrush();
+                StatusBarText.Inlines.Add(new Run(timestampToken) { Foreground = accent });
+                StatusBarText.Inlines.Add(new Run($" {content}{suffix}"));
             }
-            
-            StatusBarText.Foreground = isError ? 
-                new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(204, 0, 0)) : 
-                GetAccentBrush();
+
             StatusBarAccent.Background = GetAccentBrush();
             
             // Move focus to status bar when an error occurs for accessibility
@@ -207,10 +223,9 @@ namespace Base64Utils
 
             // Stop showcasing during conversion
             StopShowcase();
-
-            var spinnerAnimation = (Storyboard)this.Resources["SpinnerAnimation"];
-            spinnerAnimation.Begin();
-            LoadingSpinner.Visibility = Visibility.Visible;
+            StatusProgress.Foreground = GetAccentBrush();
+            StatusProgress.IsIndeterminate = true;
+            StatusProgress.Visibility = Visibility.Visible;
             ConvertButton.IsEnabled = false;
             SelectFileButton.IsEnabled = false;
             CopyButton.IsEnabled = false;
@@ -267,8 +282,8 @@ namespace Base64Utils
             }
             finally
             {
-                spinnerAnimation.Stop();
-                LoadingSpinner.Visibility = Visibility.Collapsed;
+                StatusProgress.IsIndeterminate = false;
+                StatusProgress.Visibility = Visibility.Collapsed;
                 ConvertButton.IsEnabled = true;
                 SelectFileButton.IsEnabled = true;
             }
@@ -367,10 +382,9 @@ namespace Base64Utils
         {
             var accent = GetAccentBrush();
             StatusBarAccent.Background = accent;
-
-            if (!_lastStatusWasError)
+            if (StatusProgress != null)
             {
-                StatusBarText.Foreground = accent;
+                StatusProgress.Foreground = accent;
             }
         }
 
