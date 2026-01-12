@@ -21,12 +21,16 @@ namespace Base64Utils
 
         private string? _selectedFilePath;
         private long _fileSize;
+        private string? _selectedBase64FilePath;
+        private long _base64FileSize;
         private string? _fullStatusMessage;
         private bool _lastStatusWasError;
         private Mode _currentMode = Mode.Encode;
         private readonly SolidColorBrush _encodeAccent = new SolidColorBrush(Color.FromRgb(0, 120, 212));
         private readonly SolidColorBrush _decodeAccent = new SolidColorBrush(Color.FromRgb(16, 124, 16));
         private const int MaxDisplayLength = 10000;
+        private string? _decodedTemporaryFilePath;
+        private long _decodedFileSize;
 
         public MainWindow()
         {
@@ -118,6 +122,9 @@ namespace Base64Utils
             ResetButtonAppearance(SelectFileButton);
             ResetButtonAppearance(ConvertButton);
             ResetButtonAppearance(CopyButton);
+            ResetButtonAppearance(SelectBase64FileButton);
+            ResetButtonAppearance(DecodeButton);
+            ResetButtonAppearance(SaveDecodedToFileButton);
         }
 
         private void ResetButtonAppearance(System.Windows.Controls.Button button)
@@ -395,14 +402,215 @@ namespace Base64Utils
                 _currentMode = Mode.Decode;
                 StopShowcase();
                 ApplyModeAccent();
-                ShowStatusMessage("Decode mode selected. Tools coming soon.");
+                ShowStatusMessage("Ready in Decode mode.");
+                ShowcaseButton(SelectBase64FileButton);
             }
             else
             {
                 _currentMode = Mode.Encode;
                 ApplyModeAccent();
-                ShowStatusMessage("Encode mode selected. Ready.");
+                ShowStatusMessage("Ready in Encode mode.");
                 ShowcaseButton(SelectFileButton);
+            }
+        }
+
+        private void SelectBase64FileButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Title = "Select a Base64 file to decode",
+                Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*"
+            };
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                // Clean up any existing temporary file before processing a new one
+                CleanupDecodedTemporaryFile();
+                
+                _selectedBase64FilePath = openFileDialog.FileName;
+                string fileName = System.IO.Path.GetFileName(_selectedBase64FilePath);
+                Base64FileNameTextBlock.Text = $"Selected file: {fileName}";
+                DecodeButton.IsEnabled = true;
+                _base64FileSize = 0;
+                SaveDecodedToFileButton.IsEnabled = false;
+                
+                // Showcase the Decode button as the next action
+                ShowcaseButton(DecodeButton);
+            }
+            else
+            {
+                _selectedBase64FilePath = null;
+                Base64FileNameTextBlock.Text = "No file selected.";
+                DecodeButton.IsEnabled = false;
+                _base64FileSize = 0;
+                SaveDecodedToFileButton.IsEnabled = false;
+                
+                // Showcase the Select File button again
+                ShowcaseButton(SelectBase64FileButton);
+            }
+        }
+
+        private async void DecodeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_selectedBase64FilePath) || !File.Exists(_selectedBase64FilePath))
+            {
+                ShowStatusMessage("Please select a valid file and try again.", isError: true);
+                return;
+            }
+
+            ShowStatusMessage("Decoding file from Base64...");
+
+            // Stop showcasing during decoding
+            StopShowcase();
+            StatusProgress.Foreground = GetAccentBrush();
+            StatusProgress.IsIndeterminate = true;
+            StatusProgress.Visibility = Visibility.Visible;
+            DecodeButton.IsEnabled = false;
+            SelectBase64FileButton.IsEnabled = false;
+            SaveDecodedToFileButton.IsEnabled = false;
+
+            try
+            {
+                FileInfo fileInfo = new FileInfo(_selectedBase64FilePath);
+                _base64FileSize = fileInfo.Length;
+                
+                // Decode Base64 file to binary
+                _decodedTemporaryFilePath = await DecodeBase64FileAsync(_selectedBase64FilePath);
+                _decodedFileSize = new FileInfo(_decodedTemporaryFilePath).Length;
+                
+                // Display the decoded content information
+                string formattedSize = FormatFileSize(_decodedFileSize);
+                
+                SaveDecodedToFileButton.IsEnabled = true;
+                ShowStatusMessage($"Decoding complete. Decoded size: {formattedSize}.");
+                
+                // Showcase the Save button as the next action
+                ShowcaseButton(SaveDecodedToFileButton);
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"Error decoding file: {ex.Message}. Please try again or select another file.", isError: true);
+                _base64FileSize = 0;
+                _decodedFileSize = 0;
+                _decodedTemporaryFilePath = null;
+                SaveDecodedToFileButton.IsEnabled = false;
+                
+                // Showcase Decode button again to retry
+                ShowcaseButton(DecodeButton);
+            }
+            finally
+            {
+                StatusProgress.IsIndeterminate = false;
+                StatusProgress.Visibility = Visibility.Collapsed;
+                DecodeButton.IsEnabled = true;
+                SelectBase64FileButton.IsEnabled = true;
+            }
+        }
+
+        private async void SaveDecodedToFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(_decodedTemporaryFilePath) || _decodedFileSize == 0)
+            {
+                ShowStatusMessage("No decoded content available. Please decode a file first.", isError: true);
+                return;
+            }
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog
+            {
+                Title = "Save Decoded Binary Content to File",
+                Filter = "All files (*.*)|*.*",
+                FileName = "decoded_output"
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                try
+                {
+                    // Copy the temporary decoded file to the user's selected destination
+                    File.Copy(_decodedTemporaryFilePath, saveFileDialog.FileName, overwrite: true);
+                    
+                    string originalText = SaveDecodedToFileButton.Content.ToString() ?? "Save to File";
+                    SaveDecodedToFileButton.Content = "Saved!";
+                    SaveDecodedToFileButton.IsEnabled = false;
+
+                    await Task.Delay(1500);
+
+                    SaveDecodedToFileButton.Content = originalText;
+                    SaveDecodedToFileButton.IsEnabled = true;
+                    ShowStatusMessage("Decoded content saved to file successfully.");
+                    
+                    // Clean up temporary file after successful save
+                    CleanupDecodedTemporaryFile();
+                }
+                catch (Exception ex)
+                {
+                    ShowStatusMessage($"Error saving to file: {ex.Message}. Please try again or select another location.", isError: true);
+                }
+            }
+        }
+
+        private async Task<string> DecodeBase64FileAsync(string base64FilePath)
+        {
+            // Read the Base64 content from the file
+            string base64Content = await File.ReadAllTextAsync(base64FilePath);
+            
+            // Create a temporary file for the decoded content
+            string tempFilePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"decoded_{Guid.NewGuid()}.bin");
+            
+            // Decode Base64 to binary
+            byte[] decodedBytes = Convert.FromBase64String(base64Content);
+            
+            // Write the decoded binary content to the temporary file
+            await File.WriteAllBytesAsync(tempFilePath, decodedBytes);
+            
+            return tempFilePath;
+        }
+
+        private string FormatFileSize(long bytes)
+        {
+            const long KB = 1024;
+            const long MB = KB * 1024;
+            const long GB = MB * 1024;
+
+            if (bytes >= GB)
+            {
+                return $"{(double)bytes / GB:F2} GB";
+            }
+            else if (bytes >= MB)
+            {
+                return $"{(double)bytes / MB:F2} MB";
+            }
+            else if (bytes >= KB)
+            {
+                return $"{(double)bytes / KB:F2} KB";
+            }
+            else
+            {
+                return $"{bytes} bytes";
+            }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Clean up any temporary files when the application closes
+            CleanupDecodedTemporaryFile();
+        }
+
+        private void CleanupDecodedTemporaryFile()
+        {
+            if (!string.IsNullOrEmpty(_decodedTemporaryFilePath) && File.Exists(_decodedTemporaryFilePath))
+            {
+                try
+                {
+                    File.Delete(_decodedTemporaryFilePath);
+                    _decodedTemporaryFilePath = null;
+                    _decodedFileSize = 0;
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but don't show to user as this is cleanup
+                    System.Diagnostics.Debug.WriteLine($"Failed to delete temporary file: {ex.Message}");
+                }
             }
         }
     }
