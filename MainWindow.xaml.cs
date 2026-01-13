@@ -31,6 +31,7 @@ namespace Base64Utils
         private const int MaxDisplayLength = 10000;
         private string? _decodedTemporaryFilePath;
         private long _decodedFileSize;
+        private string? _pastedBase64TemporaryFilePath;
 
         public MainWindow()
         {
@@ -432,6 +433,7 @@ namespace Base64Utils
             {
                 // Clean up any existing temporary file before processing a new one
                 CleanupDecodedTemporaryFile();
+                CleanupPastedBase64TemporaryFile();
                 
                 _selectedBase64FilePath = openFileDialog.FileName;
                 string fileName = System.IO.Path.GetFileName(_selectedBase64FilePath);
@@ -440,6 +442,10 @@ namespace Base64Utils
                 _base64FileSize = 0;
                 SaveDecodedToFileButton.IsEnabled = false;
                 DecodeResultBlock.Visibility = Visibility.Collapsed;
+                
+                // Clear paste area when file is selected
+                Base64PasteTextBox.Text = string.Empty;
+                CleanupPastedBase64TemporaryFile();
                 
                 // Showcase the Decode button as the next action
                 ShowcaseButton(DecodeButton);
@@ -458,15 +464,127 @@ namespace Base64Utils
             }
         }
 
+        private async void PasteBase64Button_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Get the clipboard content
+                string clipboardContent = Clipboard.GetText();
+                
+                if (string.IsNullOrWhiteSpace(clipboardContent))
+                {
+                    ShowStatusMessage("Clipboard is empty. Please copy a Base64 string first.", isError: true);
+                    return;
+                }
+
+                // Validate that it looks like Base64 (basic validation)
+                if (!IsValidBase64(clipboardContent))
+                {
+                    ShowStatusMessage("Clipboard content does not appear to be valid Base64. Please check and try again.", isError: true);
+                    return;
+                }
+
+                // Create a temporary file with the pasted Base64 content
+                CleanupPastedBase64TemporaryFile();
+                _pastedBase64TemporaryFilePath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"pasted_base64_{Guid.NewGuid()}.txt");
+                File.WriteAllText(_pastedBase64TemporaryFilePath, clipboardContent);
+                
+                // Display truncated preview (first 100 characters)
+                string preview = clipboardContent.Length > 100 
+                    ? clipboardContent.Substring(0, 100) + "... [Truncated]"
+                    : clipboardContent;
+                Base64PasteTextBox.Text = preview;
+                
+                // Clear file selection to avoid confusion
+                _selectedBase64FilePath = null;
+                Base64FileNameTextBlock.Text = "No file selected.";
+                
+                // Enable decode button
+                DecodeButton.IsEnabled = true;
+                SaveDecodedToFileButton.IsEnabled = false;
+                DecodeResultBlock.Visibility = Visibility.Collapsed;
+                
+                // Provide visual feedback on the button
+                string originalText = PasteBase64Button.Content.ToString() ?? "Paste from Clipboard";
+                var accent = GetAccentBrush();
+                
+                // Temporarily reset button appearance for "Pasted!" feedback
+                ResetButtonAppearance(PasteBase64Button);
+                PasteBase64Button.Content = "Pasted!";
+                PasteBase64Button.FontWeight = FontWeights.Bold;
+
+                await Task.Delay(1500);
+
+                PasteBase64Button.Content = originalText;
+                ResetButtonAppearance(PasteBase64Button);
+                
+                ShowStatusMessage("Base64 string pasted from clipboard successfully.");
+                
+                // Showcase the Decode button as the next action
+                ShowcaseButton(DecodeButton);
+            }
+            catch (Exception ex)
+            {
+                ShowStatusMessage($"Error pasting from clipboard: {ex.Message}", isError: true);
+            }
+        }
+
+        private bool IsValidBase64(string content)
+        {
+            // Remove whitespace and newlines
+            string cleaned = System.Text.RegularExpressions.Regex.Replace(content, @"\s+", "");
+            
+            // Base64 should only contain A-Z, a-z, 0-9, +, /, and = (padding)
+            if (!System.Text.RegularExpressions.Regex.IsMatch(cleaned, @"^[A-Za-z0-9+/]*={0,2}$"))
+            {
+                return false;
+            }
+            
+            // Length should be a multiple of 4
+            if (cleaned.Length % 4 != 0)
+            {
+                return false;
+            }
+            
+            // Try to decode a small portion to validate
+            try
+            {
+                // Take only the first valid Base64 block for validation
+                int blockSize = Math.Min(4, cleaned.Length);
+                string testBlock = cleaned.Substring(0, blockSize);
+                while (testBlock.Length < 4)
+                {
+                    testBlock += "A"; // Pad with valid Base64 character for testing
+                }
+                Convert.FromBase64String(testBlock);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private async void DecodeButton_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(_selectedBase64FilePath) || !File.Exists(_selectedBase64FilePath))
+            // Determine which source to use: file or pasted content
+            string? sourceFilePath = null;
+
+            if (!string.IsNullOrEmpty(_pastedBase64TemporaryFilePath) && File.Exists(_pastedBase64TemporaryFilePath))
             {
-                ShowStatusMessage("Please select a valid file and try again.", isError: true);
+                sourceFilePath = _pastedBase64TemporaryFilePath;
+            }
+            else if (!string.IsNullOrEmpty(_selectedBase64FilePath) && File.Exists(_selectedBase64FilePath))
+            {
+                sourceFilePath = _selectedBase64FilePath;
+            }
+            else
+            {
+                ShowStatusMessage("Please select a file or paste a Base64 string and try again.", isError: true);
                 return;
             }
 
-            ShowStatusMessage("Decoding file from Base64...");
+            ShowStatusMessage("Decoding from Base64...");
 
             // Stop showcasing during decoding
             StopShowcase();
@@ -475,16 +593,17 @@ namespace Base64Utils
             StatusProgress.Visibility = Visibility.Visible;
             DecodeButton.IsEnabled = false;
             SelectBase64FileButton.IsEnabled = false;
+            PasteBase64Button.IsEnabled = false;
             SaveDecodedToFileButton.IsEnabled = false;
             DecodeResultBlock.Visibility = Visibility.Collapsed;
 
             try
             {
-                FileInfo fileInfo = new FileInfo(_selectedBase64FilePath);
+                FileInfo fileInfo = new FileInfo(sourceFilePath);
                 _base64FileSize = fileInfo.Length;
                 
                 // Decode Base64 file to binary
-                _decodedTemporaryFilePath = await DecodeBase64FileAsync(_selectedBase64FilePath);
+                _decodedTemporaryFilePath = await DecodeBase64FileAsync(sourceFilePath);
                 _decodedFileSize = new FileInfo(_decodedTemporaryFilePath).Length;
                 
                 // Update the result block UI
@@ -500,7 +619,7 @@ namespace Base64Utils
             }
             catch (Exception ex)
             {
-                ShowStatusMessage($"Error decoding file: {ex.Message}. Please try again or select another file.", isError: true);
+                ShowStatusMessage($"Error decoding: {ex.Message}. Please try again.", isError: true);
                 _base64FileSize = 0;
                 _decodedFileSize = 0;
                 _decodedTemporaryFilePath = null;
@@ -516,6 +635,7 @@ namespace Base64Utils
                 StatusProgress.Visibility = Visibility.Collapsed;
                 DecodeButton.IsEnabled = true;
                 SelectBase64FileButton.IsEnabled = true;
+                PasteBase64Button.IsEnabled = true;
             }
         }
 
@@ -606,6 +726,7 @@ namespace Base64Utils
         {
             // Clean up any temporary files when the application closes
             CleanupDecodedTemporaryFile();
+            CleanupPastedBase64TemporaryFile();
         }
 
         private void CleanupDecodedTemporaryFile()
@@ -622,6 +743,23 @@ namespace Base64Utils
                 {
                     // Log the error but don't show to user as this is cleanup
                     System.Diagnostics.Debug.WriteLine($"Failed to delete temporary file: {ex.Message}");
+                }
+            }
+        }
+
+        private void CleanupPastedBase64TemporaryFile()
+        {
+            if (!string.IsNullOrEmpty(_pastedBase64TemporaryFilePath) && File.Exists(_pastedBase64TemporaryFilePath))
+            {
+                try
+                {
+                    File.Delete(_pastedBase64TemporaryFilePath);
+                    _pastedBase64TemporaryFilePath = null;
+                }
+                catch (Exception ex)
+                {
+                    // Log the error but don't show to user as this is cleanup
+                    System.Diagnostics.Debug.WriteLine($"Failed to delete pasted base64 temporary file: {ex.Message}");
                 }
             }
         }

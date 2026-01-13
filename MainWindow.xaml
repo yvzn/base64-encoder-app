@@ -88,7 +88,7 @@ Closing="Window_Closing">
                             
                             <Button x:Name="ConvertButton" 
                                     Grid.Column="3"
-                                    Content="Convert to Base64" 
+                                    Content="Encode to Base64" 
                                     Height="40" 
                                     Width="160"
                                     Margin="0"
@@ -191,6 +191,7 @@ Closing="Window_Closing">
                 </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Width="700" Margin="10">
+                        <!-- File Selection Section -->
                         <Grid Margin="10">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -217,19 +218,59 @@ Closing="Window_Closing">
                                        FontSize="14"
                                        TextWrapping="Wrap"
                                        TextTrimming="CharacterEllipsis"/>
-                            
-                            
-                            <Button x:Name="DecodeButton" 
-                                    Grid.Column="3"
-                                    Content="Decode" 
-                                    Height="40" 
-                                    Width="160"
-                                    Margin="0"
-                                    FontSize="16"
-                                    IsEnabled="False"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="DecodeButton_Click"/>
                         </Grid>
+
+                        <!-- Divider -->
+                        <TextBlock Text="– OR –" 
+                                   HorizontalAlignment="Center" 
+                                   FontSize="12" 
+                                   Foreground="#FF999999"
+                                   Margin="0,10,0,10"
+                                   FontWeight="SemiBold"/>
+
+                        <!-- Paste Base64 String Section -->
+                        <Grid Margin="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <Button x:Name="PasteBase64Button" 
+                                    Grid.Column="0"
+                                    Content="Paste from Clipboard" 
+                                    Height="30" 
+                                    Width="140"
+                                    Margin="0,0,10,0"
+                                    FontSize="12"
+                                    Style="{StaticResource EnhancedFocusButtonStyle}"
+                                    Click="PasteBase64Button_Click"/>
+                            
+                            <TextBox x:Name="Base64PasteTextBox" 
+                                     Grid.Column="1"
+                                     Height="30"
+                                     IsReadOnly="True"
+                                     FontFamily="Consolas"
+                                     FontSize="12"
+                                     VerticalScrollBarVisibility="Hidden"
+                                     HorizontalScrollBarVisibility="Hidden"
+                                     TextWrapping="NoWrap"
+                                     Background="White"
+                                     BorderBrush="#FFCCCCCC"
+                                     BorderThickness="1"
+                                     VerticalContentAlignment="Center"
+                                     Padding="5,8"/>
+                        </Grid>
+                        
+                        <Button x:Name="DecodeButton" 
+                                Content="Decode Base64" 
+                                Height="40" 
+                                Width="160"
+                                Margin="10,15,10,0"
+                                FontSize="16"
+                                HorizontalAlignment="Right"
+                                IsEnabled="False"
+                                Style="{StaticResource EnhancedFocusButtonStyle}"
+                                Click="DecodeButton_Click"/>
                         
                         <Grid Margin="10,20,10,5">
                             <Grid.ColumnDefinitions>
