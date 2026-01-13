@@ -464,6 +464,32 @@ namespace Base64Utils
             }
         }
 
+        private void EncodeTab_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // Handle Ctrl+C to copy the encoded Base64 string
+            if (e.Key == System.Windows.Input.Key.C && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+            {
+                // Only proceed if there's a file selected and conversion has been done
+                if (!string.IsNullOrEmpty(_selectedFilePath) && _fileSize > 0 && CopyButton.IsEnabled)
+                {
+                    // Trigger the copy action
+                    CopyButton_Click(CopyButton, new RoutedEventArgs());
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void DecodeTab_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            // Handle Ctrl+V to paste from clipboard
+            if (e.Key == System.Windows.Input.Key.V && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+            {
+                // Trigger the paste action
+                PasteBase64Button_Click(PasteBase64Button, new RoutedEventArgs());
+                e.Handled = true;
+            }
+        }
+
         private async void PasteBase64Button_Click(object sender, RoutedEventArgs e)
         {
             try

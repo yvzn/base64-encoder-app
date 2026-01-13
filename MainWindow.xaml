@@ -49,7 +49,7 @@ Closing="Window_Closing">
                     Grid.Row="0"
                     Margin="10,10,10,10"
                     SelectionChanged="ModeTabControl_SelectionChanged">
-            <TabItem x:Name="EncodeTab">
+            <TabItem x:Name="EncodeTab" KeyDown="EncodeTab_KeyDown">
                 <TabItem.Header>
                     <StackPanel>
                         <Rectangle Height="4" Fill="{StaticResource EncodeAccentBrush}" RadiusX="0" RadiusY="0"/>
@@ -182,7 +182,7 @@ Closing="Window_Closing">
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem x:Name="DecodeTab">
+            <TabItem x:Name="DecodeTab" KeyDown="DecodeTab_KeyDown">
                 <TabItem.Header>
                     <StackPanel>
                         <Rectangle Height="4" Fill="{StaticResource DecodeAccentBrush}" RadiusX="0" RadiusY="0"/>
