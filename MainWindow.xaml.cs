@@ -195,7 +195,7 @@ namespace Base64Utils
                 string fileName = System.IO.Path.GetFileName(_selectedFilePath);
                 FileNameTextBlock.Text = $"Selected file: {fileName}";
                 ConvertButton.IsEnabled = true;
-                ResultTextBox.Text = string.Empty;
+                EncodeResultBlock.Visibility = Visibility.Collapsed;
                 _fileSize = 0;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
@@ -208,7 +208,7 @@ namespace Base64Utils
                 _selectedFilePath = null;
                 FileNameTextBlock.Text = "No file selected.";
                 ConvertButton.IsEnabled = false;
-                ResultTextBox.Text = string.Empty;
+                EncodeResultBlock.Visibility = Visibility.Collapsed;
                 _fileSize = 0;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
@@ -237,38 +237,43 @@ namespace Base64Utils
             SelectFileButton.IsEnabled = false;
             CopyButton.IsEnabled = false;
             SaveToFileButton.IsEnabled = false;
+            EncodeResultBlock.Visibility = Visibility.Collapsed;
 
             try
             {
                 FileInfo fileInfo = new FileInfo(_selectedFilePath);
                 _fileSize = fileInfo.Length;
                 
-                // Calculate how many bytes we need to read for the display preview
-                // Base64 encoding increases size by ~4/3, so we need (MaxDisplayLength * 3 / 4) bytes
-                int bytesToRead = (int)Math.Min(_fileSize, (MaxDisplayLength * 3 / 4));
-                
+                // Generate preview (first ~100 characters of Base64)
+                const int previewLength = 100;
                 string previewBase64;
                 long estimatedBase64Length;
                 
                 using (FileStream inputFile = new FileStream(_selectedFilePath, FileMode.Open, FileAccess.Read))
                 using (CryptoStream base64Stream = new CryptoStream(inputFile, new ToBase64Transform(), CryptoStreamMode.Read))
                 {
-                    byte[] buffer = new byte[MaxDisplayLength];
-                    int bytesRead = await base64Stream.ReadAsync(buffer, 0, MaxDisplayLength);
+                    byte[] buffer = new byte[previewLength];
+                    int bytesRead = await base64Stream.ReadAsync(buffer, 0, previewLength);
                     previewBase64 = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
                 }
                 
                 // Calculate estimated full Base64 length
                 estimatedBase64Length = ((_fileSize + 2) / 3) * 4;
 
-                if (estimatedBase64Length > MaxDisplayLength)
+                // Update the result block UI
+                string sizeInfo = $"Original file size: {FormatFileSize(_fileSize)}\nBase64 output size: {estimatedBase64Length:N0} characters";
+                EncodeResultInfo.Text = sizeInfo;
+                
+                if (estimatedBase64Length > previewLength)
                 {
-                    ResultTextBox.Text = $"{previewBase64}\n\n[Truncated - Full length: {estimatedBase64Length:N0} characters. Click 'Copy to Clipboard' to copy the complete Base64 string.]";
+                    EncodePreviewTextBox.Text = $"{previewBase64}... [Truncated]";
                 }
                 else
                 {
-                    ResultTextBox.Text = previewBase64;
+                    EncodePreviewTextBox.Text = previewBase64;
                 }
+                
+                EncodeResultBlock.Visibility = Visibility.Visible;
 
                 CopyButton.IsEnabled = true;
                 SaveToFileButton.IsEnabled = true;
@@ -283,6 +288,7 @@ namespace Base64Utils
                 _fileSize = 0;
                 CopyButton.IsEnabled = false;
                 SaveToFileButton.IsEnabled = false;
+                EncodeResultBlock.Visibility = Visibility.Collapsed;
                 
                 // Showcase Convert button again to retry
                 ShowcaseButton(ConvertButton);
@@ -433,6 +439,7 @@ namespace Base64Utils
                 DecodeButton.IsEnabled = true;
                 _base64FileSize = 0;
                 SaveDecodedToFileButton.IsEnabled = false;
+                DecodeResultBlock.Visibility = Visibility.Collapsed;
                 
                 // Showcase the Decode button as the next action
                 ShowcaseButton(DecodeButton);
@@ -444,6 +451,7 @@ namespace Base64Utils
                 DecodeButton.IsEnabled = false;
                 _base64FileSize = 0;
                 SaveDecodedToFileButton.IsEnabled = false;
+                DecodeResultBlock.Visibility = Visibility.Collapsed;
                 
                 // Showcase the Select File button again
                 ShowcaseButton(SelectBase64FileButton);
@@ -468,6 +476,7 @@ namespace Base64Utils
             DecodeButton.IsEnabled = false;
             SelectBase64FileButton.IsEnabled = false;
             SaveDecodedToFileButton.IsEnabled = false;
+            DecodeResultBlock.Visibility = Visibility.Collapsed;
 
             try
             {
@@ -478,11 +487,13 @@ namespace Base64Utils
                 _decodedTemporaryFilePath = await DecodeBase64FileAsync(_selectedBase64FilePath);
                 _decodedFileSize = new FileInfo(_decodedTemporaryFilePath).Length;
                 
-                // Display the decoded content information
-                string formattedSize = FormatFileSize(_decodedFileSize);
+                // Update the result block UI
+                string sizeInfo = $"Base64 input size: {FormatFileSize(_base64FileSize)}\nDecoded binary size: {FormatFileSize(_decodedFileSize)}";
+                DecodeResultInfo.Text = sizeInfo;
+                DecodeResultBlock.Visibility = Visibility.Visible;
                 
                 SaveDecodedToFileButton.IsEnabled = true;
-                ShowStatusMessage($"Decoding complete. Decoded size: {formattedSize}.");
+                ShowStatusMessage($"Decoding complete. Decoded size: {FormatFileSize(_decodedFileSize)}.");
                 
                 // Showcase the Save button as the next action
                 ShowcaseButton(SaveDecodedToFileButton);
@@ -494,6 +505,7 @@ namespace Base64Utils
                 _decodedFileSize = 0;
                 _decodedTemporaryFilePath = null;
                 SaveDecodedToFileButton.IsEnabled = false;
+                DecodeResultBlock.Visibility = Visibility.Collapsed;
                 
                 // Showcase Decode button again to retry
                 ShowcaseButton(DecodeButton);
