@@ -323,11 +323,17 @@ namespace Base64Utils
                     CopyButton.Foreground = System.Windows.Media.Brushes.White;
                     CopyButton.FontWeight = FontWeights.Bold;
 
-                    await Task.Delay(1500);
+                    _ = Task.Delay(1500).ContinueWith(_ => 
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            CopyButton.Content = originalText;
+                            // Restore the showcase highlighting
+                            ShowcaseButton(CopyButton);
+                        });
+                    });
 
-                    CopyButton.Content = originalText;
-                    // Restore the showcase highlighting
-                    ShowcaseButton(CopyButton);
+                    await Task.CompletedTask;
                     ShowStatusMessage("Base64 string copied to clipboard successfully.");
                 }
                 catch (Exception ex)
@@ -361,10 +367,14 @@ namespace Base64Utils
                         SaveToFileButton.Content = "Saved!";
                         SaveToFileButton.IsEnabled = false;
 
-                        await Task.Delay(1500);
-
-                        SaveToFileButton.Content = originalText;
-                        SaveToFileButton.IsEnabled = true;
+                        _ = Task.Delay(1500).ContinueWith(_ => 
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                SaveToFileButton.Content = originalText;
+                                SaveToFileButton.IsEnabled = true;
+                            });
+                        });
                         ShowStatusMessage("Base64 string saved to file successfully.");
                     }
                     catch (Exception ex)
@@ -539,10 +549,14 @@ namespace Base64Utils
                 PasteBase64Button.Content = "Pasted!";
                 PasteBase64Button.FontWeight = FontWeights.Bold;
 
-                await Task.Delay(1500);
-
-                PasteBase64Button.Content = originalText;
-                ResetButtonAppearance(PasteBase64Button);
+                _ = Task.Delay(1500).ContinueWith(_ => 
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        PasteBase64Button.Content = originalText;
+                        ResetButtonAppearance(PasteBase64Button);
+                    });
+                });
                 
                 ShowStatusMessage("Base64 string pasted from clipboard successfully.");
                 
@@ -691,10 +705,14 @@ namespace Base64Utils
                     SaveDecodedToFileButton.Content = "Saved!";
                     SaveDecodedToFileButton.IsEnabled = false;
 
-                    await Task.Delay(1500);
-
-                    SaveDecodedToFileButton.Content = originalText;
-                    SaveDecodedToFileButton.IsEnabled = true;
+                    _ = Task.Delay(1500).ContinueWith(_ => 
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            SaveDecodedToFileButton.Content = originalText;
+                            SaveDecodedToFileButton.IsEnabled = true;
+                        });
+                    });
                     ShowStatusMessage("Decoded content saved to file successfully.");
                     
                     // Clean up temporary file after successful save
