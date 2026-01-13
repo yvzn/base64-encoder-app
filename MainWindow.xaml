@@ -8,8 +8,12 @@ mc:Ignorable="d"
 Title="Base64 Converter" Height="600" Width="800"
 Closing="Window_Closing">
     <Window.Resources>
-        <Color x:Key="EncodeAccentColor">#0078D4</Color>
-        <Color x:Key="DecodeAccentColor">#107C10</Color>
+        <!-- Font Family -->
+        <FontFamily x:Key="MainFont">fonts/#Atkinson Hyperlegible Next</FontFamily>
+        
+        <!-- https://colorhunt.co/palette/40a2e3fff6e9bbe2ec0d9276 -->
+        <Color x:Key="EncodeAccentColor">#40A2E3</Color>
+        <Color x:Key="DecodeAccentColor">#0D9276</Color>
         <SolidColorBrush x:Key="EncodeAccentBrush" Color="{StaticResource EncodeAccentColor}"/>
         <SolidColorBrush x:Key="DecodeAccentBrush" Color="{StaticResource DecodeAccentColor}"/>
         
@@ -35,7 +39,7 @@ Closing="Window_Closing">
             </Setter>
         </Style>
     </Window.Resources>
-    <Grid>
+    <Grid TextElement.FontFamily="{StaticResource MainFont}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="32"/>
@@ -220,7 +224,7 @@ Closing="Window_Closing">
             </TabItem>
         </TabControl>
         
-        <StatusBar Grid.Row="1" Height="32" Background="#FFF5F5F5">
+        <StatusBar Grid.Row="1" Height="32" Background="#FFF5F5F5" FontFamily="{StaticResource MainFont}">
             <StatusBarItem>
                 <Grid VerticalAlignment="Center">
                     <Grid.ColumnDefinitions>
@@ -257,11 +261,12 @@ Closing="Window_Closing">
                                StaysOpen="True"
                                Opened="StatusMessagePopup_Opened">
                             <Border Background="White" 
-                                    BorderBrush="#FFCCCCCC" 
-                                    BorderThickness="1"
-                                    Padding="10"
-                                    MaxWidth="750"
-                                    CornerRadius="3">
+                                BorderBrush="#FFCCCCCC" 
+                                BorderThickness="1"
+                                Padding="10"
+                                MaxWidth="750"
+                                CornerRadius="3"
+                                TextElement.FontFamily="{StaticResource MainFont}">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
                                 </Border.Effect>

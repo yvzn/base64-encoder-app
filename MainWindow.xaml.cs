@@ -26,8 +26,8 @@ namespace Base64Utils
         private string? _fullStatusMessage;
         private bool _lastStatusWasError;
         private Mode _currentMode = Mode.Encode;
-        private readonly SolidColorBrush _encodeAccent = new SolidColorBrush(Color.FromRgb(0, 120, 212));
-        private readonly SolidColorBrush _decodeAccent = new SolidColorBrush(Color.FromRgb(16, 124, 16));
+        private readonly SolidColorBrush _encodeAccent = new SolidColorBrush(Color.FromRgb(64, 162, 227));
+        private readonly SolidColorBrush _decodeAccent = new SolidColorBrush(Color.FromRgb(13, 146, 118));
         private const int MaxDisplayLength = 10000;
         private string? _decodedTemporaryFilePath;
         private long _decodedFileSize;
