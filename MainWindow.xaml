@@ -4,12 +4,18 @@ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
 xmlns:local="clr-namespace:Base64Utils"
+xmlns:converters="clr-namespace:Base64Utils.Converters"
+xmlns:behaviors="clr-namespace:Base64Utils.Behaviors"
 mc:Ignorable="d"
-Title="Base64 Converter" Height="600" Width="800"
-Closing="Window_Closing">
+Title="Base64 Converter" Height="600" Width="800">
     <Window.Resources>
         <!-- Font Family -->
         <FontFamily x:Key="MainFont">fonts/#Atkinson Hyperlegible Next</FontFamily>
+        
+        <!-- Converters -->
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
+        <converters:InverseBooleanConverter x:Key="InverseBoolConverter"/>
+        <converters:BooleanToCursorConverter x:Key="BoolToCursorConverter"/>
         
         <!-- https://colorhunt.co/palette/40a2e3fff6e9bbe2ec0d9276 -->
         <Color x:Key="EncodeAccentColor">#40A2E3</Color>
@@ -38,6 +44,15 @@ Closing="Window_Closing">
                 </Setter.Value>
             </Setter>
         </Style>
+        
+        <!-- Showcase Button Style - highlights the next action -->
+        <Style x:Key="ShowcaseButtonStyle" TargetType="Button" BasedOn="{StaticResource EnhancedFocusButtonStyle}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowcasedButton}" Value="{x:Null}">
+                    <Setter Property="FontWeight" Value="Normal"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid TextElement.FontFamily="{StaticResource MainFont}">
         <Grid.RowDefinitions>
@@ -48,8 +63,11 @@ Closing="Window_Closing">
         <TabControl x:Name="ModeTabControl"
                     Grid.Row="0"
                     Margin="10,10,10,10"
-                    SelectionChanged="ModeTabControl_SelectionChanged">
-            <TabItem x:Name="EncodeTab" KeyDown="EncodeTab_KeyDown">
+                    SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}">
+            <TabItem x:Name="EncodeTab">
+                <TabItem.InputBindings>
+                    <KeyBinding Key="C" Modifiers="Control" Command="{Binding CopyToClipboardCommand}"/>
+                </TabItem.InputBindings>
                 <TabItem.Header>
                     <StackPanel>
                         <Rectangle Height="4" Fill="{StaticResource EncodeAccentBrush}" RadiusX="0" RadiusY="0"/>
@@ -73,12 +91,24 @@ Closing="Window_Closing">
                                     Width="120"
                                     Margin="0,0,10,0"
                                     FontSize="16"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="SelectFileButton_Click"/>
+                                    Command="{Binding SelectFileCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowcasedButton}" Value="SelectFile">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             
                             <TextBlock x:Name="FileNameTextBlock" 
                                        Grid.Column="1"
-                                       Text="No file selected." 
+                                       Text="{Binding FileNameDisplay}" 
                                        VerticalAlignment="Center"
                                        Margin="10,0"
                                        FontSize="14"
@@ -93,9 +123,21 @@ Closing="Window_Closing">
                                     Width="160"
                                     Margin="0"
                                     FontSize="16"
-                                    IsEnabled="False"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="ConvertButton_Click"/>
+                                    IsEnabled="{Binding IsConvertButtonEnabled}"
+                                    Command="{Binding ConvertToBase64Command}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowcasedButton}" Value="Convert">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
                         
                         <Grid Margin="10,20,10,5">
@@ -114,24 +156,48 @@ Closing="Window_Closing">
                             
                             <Button x:Name="SaveToFileButton"
                                     Grid.Column="2"
-                                    Content="Save to File"
+                                    Content="{Binding SaveToFileButtonText}"
                                     Height="30"
                                     Width="120"
                                     Margin="0,0,10,0"
                                     FontSize="12"
-                                    IsEnabled="False"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="SaveToFileButton_Click"/>
+                                    IsEnabled="{Binding IsSaveToFileButtonEnabled}"
+                                    Command="{Binding SaveToFileCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowcasedButton}" Value="SaveToFile">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             
                             <Button x:Name="CopyButton"
                                     Grid.Column="3"
-                                    Content="Copy to Clipboard"
+                                    Content="{Binding CopyButtonText}"
                                     Height="30"
                                     Width="140"
                                     FontSize="12"
-                                    IsEnabled="False"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="CopyButton_Click"/>
+                                    IsEnabled="{Binding IsCopyButtonEnabled}"
+                                    Command="{Binding CopyToClipboardCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowcasedButton}" Value="Copy">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
                         
                         <!-- Result Display Block -->
@@ -142,7 +208,7 @@ Closing="Window_Closing">
                                 BorderThickness="2"
                                 CornerRadius="4"
                                 Background="#FFF9F9F9"
-                                Visibility="Collapsed">
+                                Visibility="{Binding IsEncodeResultVisible, Converter={StaticResource BoolToVisConverter}}">
                             <StackPanel>
                                 <TextBlock x:Name="EncodeResultTitle"
                                            Text="✓ Encoding Successful"
@@ -151,7 +217,7 @@ Closing="Window_Closing">
                                            Foreground="#FF0D9276"
                                            Margin="0,0,0,10"/>
                                 <TextBlock x:Name="EncodeResultInfo"
-                                           Text=""
+                                           Text="{Binding EncodeResultInfo}"
                                            FontSize="14"
                                            TextWrapping="Wrap"
                                            Margin="0,0,0,10"/>
@@ -169,7 +235,8 @@ Closing="Window_Closing">
                                          TextWrapping="NoWrap"
                                          Background="White"
                                          BorderBrush="#FFCCCCCC"
-                                         Padding="5,4"/>
+                                         Padding="5,4"
+                                         Text="{Binding EncodePreview, Mode=OneWay}"/>
                                 <TextBlock Text="Use the buttons above to copy the complete Base64 string or save it to a file."
                                            FontSize="12"
                                            FontStyle="Italic"
@@ -182,7 +249,10 @@ Closing="Window_Closing">
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem x:Name="DecodeTab" KeyDown="DecodeTab_KeyDown">
+            <TabItem x:Name="DecodeTab">
+                <TabItem.InputBindings>
+                    <KeyBinding Key="V" Modifiers="Control" Command="{Binding PasteBase64Command}"/>
+                </TabItem.InputBindings>
                 <TabItem.Header>
                     <StackPanel>
                         <Rectangle Height="4" Fill="{StaticResource DecodeAccentBrush}" RadiusX="0" RadiusY="0"/>
@@ -207,12 +277,24 @@ Closing="Window_Closing">
                                     Width="120"
                                     Margin="0,0,10,0"
                                     FontSize="16"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="SelectBase64FileButton_Click"/>
+                                    Command="{Binding SelectBase64FileCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowcasedButton}" Value="SelectBase64File">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             
                             <TextBlock x:Name="Base64FileNameTextBlock" 
                                        Grid.Column="1"
-                                       Text="No file selected." 
+                                       Text="{Binding Base64FileNameDisplay}" 
                                        VerticalAlignment="Center"
                                        Margin="10,0"
                                        FontSize="14"
@@ -237,13 +319,25 @@ Closing="Window_Closing">
                             
                             <Button x:Name="PasteBase64Button" 
                                     Grid.Column="0"
-                                    Content="Paste from Clipboard" 
+                                    Content="{Binding PasteBase64ButtonText}" 
                                     Height="30" 
                                     Width="140"
                                     Margin="0,0,10,0"
                                     FontSize="12"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="PasteBase64Button_Click"/>
+                                    Command="{Binding PasteBase64Command}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowcasedButton}" Value="PasteBase64">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             
                             <TextBox x:Name="Base64PasteTextBox" 
                                      Grid.Column="1"
@@ -258,7 +352,8 @@ Closing="Window_Closing">
                                      BorderBrush="#FFCCCCCC"
                                      BorderThickness="1"
                                      VerticalContentAlignment="Center"
-                                     Padding="5,8"/>
+                                     Padding="5,8"
+                                     Text="{Binding Base64PastePreview, Mode=OneWay}"/>
                         </Grid>
                         
                         <Button x:Name="DecodeButton" 
@@ -268,9 +363,21 @@ Closing="Window_Closing">
                                 Margin="10,15,10,0"
                                 FontSize="16"
                                 HorizontalAlignment="Right"
-                                IsEnabled="False"
-                                Style="{StaticResource EnhancedFocusButtonStyle}"
-                                Click="DecodeButton_Click"/>
+                                IsEnabled="{Binding IsDecodeButtonEnabled}"
+                                Command="{Binding DecodeBase64Command}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowcasedButton}" Value="Decode">
+                                            <Setter Property="FontWeight" Value="Bold"/>
+                                            <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                         
                         <Grid Margin="10,20,10,5">
                             <Grid.ColumnDefinitions>
@@ -287,14 +394,26 @@ Closing="Window_Closing">
                             
                             <Button x:Name="SaveDecodedToFileButton"
                                     Grid.Column="2"
-                                    Content="Save to File"
+                                    Content="{Binding SaveDecodedButtonText}"
                                     Height="30"
                                     Width="120"
                                     Margin="0,0,0,0"
                                     FontSize="12"
-                                    IsEnabled="False"
-                                    Style="{StaticResource EnhancedFocusButtonStyle}"
-                                    Click="SaveDecodedToFileButton_Click"/>
+                                    IsEnabled="{Binding IsSaveDecodedButtonEnabled}"
+                                    Command="{Binding SaveDecodedFileCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource ShowcaseButtonStyle}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowcasedButton}" Value="SaveDecoded">
+                                                <Setter Property="FontWeight" Value="Bold"/>
+                                                <Setter Property="Background" Value="{Binding AccentBrush}"/>
+                                                <Setter Property="Foreground" Value="White"/>
+                                                <Setter Property="behaviors:FocusBehavior.IsFocused" Value="True"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </Grid>
                         
                         <!-- Result Display Block -->
@@ -305,7 +424,7 @@ Closing="Window_Closing">
                                 BorderThickness="2"
                                 CornerRadius="4"
                                 Background="#FFF9F9F9"
-                                Visibility="Collapsed">
+                                Visibility="{Binding IsDecodeResultVisible, Converter={StaticResource BoolToVisConverter}}">
                             <StackPanel>
                                 <TextBlock x:Name="DecodeResultTitle"
                                            Text="✓ Decoding Successful"
@@ -314,7 +433,7 @@ Closing="Window_Closing">
                                            Foreground="#FF0D9276"
                                            Margin="0,0,0,10"/>
                                 <TextBlock x:Name="DecodeResultInfo"
-                                           Text=""
+                                           Text="{Binding DecodeResultInfo}"
                                            FontSize="14"
                                            TextWrapping="Wrap"
                                            Margin="0,0,0,10"/>
@@ -338,35 +457,40 @@ Closing="Window_Closing">
                         <ColumnDefinition Width="10"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Border x:Name="StatusBarAccent" Grid.Column="0" Width="4" CornerRadius="0" Background="{StaticResource EncodeAccentBrush}"/>
+                    <Border x:Name="StatusBarAccent" Grid.Column="0" Width="4" CornerRadius="0" Background="{Binding AccentBrush, Mode=OneWay}"/>
                     <Grid Grid.Column="1">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock x:Name="StatusBarText" Grid.Column="0"
-                                   Text="Ready" 
-                                   Foreground="#FF333333"
+                                   Text="{Binding StatusMessage, Mode=OneWay}" 
+                                   Foreground="{Binding StatusForeground, Mode=OneWay}"
                                    FontSize="14"
                                    TextTrimming="CharacterEllipsis"
-                                   Cursor="Hand"
+                                   Cursor="{Binding CanExpandStatusMessage, Converter={StaticResource BoolToCursorConverter}}"
                                    Focusable="True"
-                                   MouseLeftButtonDown="StatusBarText_MouseLeftButtonDown"
-                                   KeyDown="StatusBarText_KeyDown"
-                                   ToolTip="Press Enter or Space to expand message"/>
+                                   behaviors:FocusBehavior.IsFocused="{Binding ShouldFocusStatusBar}"
+                                   ToolTip="Press Enter or Space to expand message">
+                            <TextBlock.InputBindings>
+                                <MouseBinding MouseAction="LeftClick" Command="{Binding ToggleStatusPopupCommand}"/>
+                                <KeyBinding Key="Enter" Command="{Binding ToggleStatusPopupCommand}"/>
+                                <KeyBinding Key="Space" Command="{Binding ToggleStatusPopupCommand}"/>
+                            </TextBlock.InputBindings>
+                        </TextBlock>
                         <ProgressBar x:Name="StatusProgress" Grid.Column="1"
                                      Width="140"
                                      Height="14"
                                      Margin="8,0,0,0"
                                      IsIndeterminate="True"
-                                     Visibility="Collapsed"
-                                     Foreground="{StaticResource EncodeAccentBrush}"/>
+                                     Visibility="{Binding IsProcessing, Converter={StaticResource BoolToVisConverter}}"
+                                     Foreground="{Binding AccentBrush, Mode=OneWay}"/>
                         <Popup x:Name="StatusMessagePopup"
                                PlacementTarget="{Binding ElementName=StatusBarText}"
                                Placement="Top"
                                AllowsTransparency="True"
                                StaysOpen="True"
-                               Opened="StatusMessagePopup_Opened">
+                               IsOpen="{Binding IsStatusPopupOpen, Mode=TwoWay}">
                             <Border Background="White" 
                                 BorderBrush="#FFCCCCCC" 
                                 BorderThickness="1"
@@ -379,6 +503,7 @@ Closing="Window_Closing">
                                 </Border.Effect>
                                 <Grid>
                                     <TextBlock x:Name="ExpandedMessageText"
+                                               Text="{Binding FullStatusMessage}"
                                                TextWrapping="Wrap"
                                                Foreground="#FF333333"
                                                FontSize="14"
@@ -397,8 +522,10 @@ Closing="Window_Closing">
                                             FontWeight="Bold"
                                             Cursor="Hand"
                                             ToolTip="Press Escape or click to close"
-                                            Click="ClosePopupButton_Click"
-                                            KeyDown="ClosePopupButton_KeyDown">
+                                            Command="{Binding CloseStatusPopupCommand}">
+                                        <Button.InputBindings>
+                                            <KeyBinding Key="Escape" Command="{Binding CloseStatusPopupCommand}"/>
+                                        </Button.InputBindings>
                                         <Button.Style>
                                             <Style TargetType="Button">
                                                 <Setter Property="Foreground" Value="#FF999999"/>
@@ -414,6 +541,7 @@ Closing="Window_Closing">
                                 </Grid>
                             </Border>
                         </Popup>
+                        <!-- Removed popup for simplification - status messages are now concise -->
                     </Grid>
                 </Grid>
             </StatusBarItem>
