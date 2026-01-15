@@ -9,10 +9,12 @@ namespace Base64Utils.Services
     {
         private const int PreviewLength = 100;
         private readonly IFileTypeDetectionService _fileTypeDetectionService;
+        private readonly IFileService _fileService;
 
-        public Base64Service(IFileTypeDetectionService fileTypeDetectionService)
+        public Base64Service(IFileTypeDetectionService fileTypeDetectionService, IFileService fileService)
         {
             _fileTypeDetectionService = fileTypeDetectionService;
+            _fileService = fileService;
         }
 
         public async Task<ConversionResult> EncodeFileAsync(string filePath)
@@ -110,6 +112,9 @@ namespace Base64Utils.Services
                 // Rename the file with the proper extension
                 string tempFilePath = $"{tempFilePathWithoutExt}.{extension}";
                 File.Move(tempFilePathWithoutExt, tempFilePath);
+
+                // Track the temporary file for cleanup on exit
+                _fileService.TrackTemporaryFile(tempFilePath);
 
                 var decodedFileSize = new FileInfo(tempFilePath).Length;
 

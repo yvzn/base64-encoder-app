@@ -8,5 +8,6 @@ namespace Base64Utils.Services
         Task CopyFileAsync(string sourceFilePath, string destinationFilePath);
         void DeleteFile(string filePath);
         bool FileExists(string filePath);
+        void TrackTemporaryFile(string filePath);
     }
 }

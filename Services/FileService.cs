@@ -5,6 +5,8 @@ namespace Base64Utils.Services
 {
     public class FileService : IFileService
     {
+        private static readonly List<string> _temporaryFiles = new List<string>();
+        private static readonly object _lockObject = new object();
         public string? OpenFileDialog(string title, string filter)
         {
             var openFileDialog = new OpenFileDialog
@@ -57,6 +59,43 @@ namespace Base64Utils.Services
         public bool FileExists(string filePath)
         {
             return File.Exists(filePath);
+        }
+
+        public void TrackTemporaryFile(string filePath)
+        {
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                lock (_lockObject)
+                {
+                    if (!_temporaryFiles.Contains(filePath))
+                    {
+                        _temporaryFiles.Add(filePath);
+                    }
+                }
+            }
+        }
+
+        public static void CleanupAllTemporaryFiles()
+        {
+            lock (_lockObject)
+            {
+                foreach (var filePath in _temporaryFiles)
+                {
+                    if (File.Exists(filePath))
+                    {
+                        try
+                        {
+                            File.Delete(filePath);
+                            System.Diagnostics.Debug.WriteLine($"Deleted temporary file: {filePath}");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to delete temporary file {filePath}: {ex.Message}");
+                        }
+                    }
+                }
+                _temporaryFiles.Clear();
+            }
         }
     }
 }

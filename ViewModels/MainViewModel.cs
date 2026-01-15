@@ -259,7 +259,7 @@ namespace Base64Utils.ViewModels
                 {
                     string fullBase64String = await _base64Service.GetFullBase64StringAsync(SelectedFilePath);
                     await _fileService.SaveTextToFileAsync(saveFilePath, fullBase64String);
-                    UpdateStatusMessage("Base64 string saved to file successfully.");
+                    UpdateStatusMessage($"Base64 string saved to file: {saveFilePath}");
                     
                     // Provide visual feedback
                     SaveToFileButtonText = "Saved!";
@@ -284,9 +284,6 @@ namespace Base64Utils.ViewModels
 
             if (!string.IsNullOrEmpty(filePath))
             {
-                CleanupDecodedTemporaryFile();
-                CleanupPastedBase64TemporaryFile();
-
                 SelectedBase64FilePath = filePath;
                 Base64FileNameDisplay = $"Selected file: {Path.GetFileName(filePath)}";
                 IsDecodeButtonEnabled = true;
@@ -329,9 +326,9 @@ namespace Base64Utils.ViewModels
                 }
 
                 // Create a temporary file with the pasted Base64 content
-                CleanupPastedBase64TemporaryFile();
                 _pastedBase64TemporaryFilePath = Path.Combine(Path.GetTempPath(), $"pasted_base64_{Guid.NewGuid()}.txt");
                 await File.WriteAllTextAsync(_pastedBase64TemporaryFilePath, clipboardContent);
+                _fileService.TrackTemporaryFile(_pastedBase64TemporaryFilePath);
 
                 // Display truncated preview
                 string preview = clipboardContent.Length > 100
@@ -471,8 +468,7 @@ namespace Base64Utils.ViewModels
                 try
                 {
                     await _fileService.CopyFileAsync(_decodedTemporaryFilePath, saveFilePath);
-                    UpdateStatusMessage("Decoded content saved to file successfully.");
-                    CleanupDecodedTemporaryFile();
+                    UpdateStatusMessage($"Decoded content saved to file: {saveFilePath}");
                     
                     // Provide visual feedback
                     SaveDecodedButtonText = "Saved!";
