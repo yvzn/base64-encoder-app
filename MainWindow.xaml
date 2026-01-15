@@ -384,6 +384,7 @@ Title="Base64 Converter" Height="600" Width="800">
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             
                             <TextBlock Grid.Column="0"
@@ -392,8 +393,19 @@ Title="Base64 Converter" Height="600" Width="800">
                                        FontWeight="Bold"
                                        VerticalAlignment="Center"/>
                             
-                            <Button x:Name="SaveDecodedToFileButton"
+                            <Button x:Name="PreviewInBrowserButton"
                                     Grid.Column="2"
+                                    Content="Preview in Browser"
+                                    Height="30"
+                                    Width="140"
+                                    Margin="0,0,10,0"
+                                    FontSize="12"
+                                    IsEnabled="{Binding IsPreviewInBrowserEnabled}"
+                                    Command="{Binding PreviewInBrowserCommand}"
+                                    Style="{StaticResource ShowcaseButtonStyle}"/>
+                            
+                            <Button x:Name="SaveDecodedToFileButton"
+                                    Grid.Column="3"
                                     Content="{Binding SaveDecodedButtonText}"
                                     Height="30"
                                     Width="120"

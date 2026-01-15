@@ -69,6 +69,9 @@ namespace Base64Utils.ViewModels
         private bool _isSaveDecodedButtonEnabled;
 
         [ObservableProperty]
+        private bool _isPreviewInBrowserEnabled;
+
+        [ObservableProperty]
         private bool _isDecodeResultVisible;
 
         [ObservableProperty]
@@ -288,6 +291,7 @@ namespace Base64Utils.ViewModels
                 Base64FileNameDisplay = $"Selected file: {Path.GetFileName(filePath)}";
                 IsDecodeButtonEnabled = true;
                 IsSaveDecodedButtonEnabled = false;
+                IsPreviewInBrowserEnabled = false;
                 IsDecodeResultVisible = false;
                 ShowcasedButton = "Decode";
 
@@ -342,6 +346,7 @@ namespace Base64Utils.ViewModels
                 // Enable decode button
                 IsDecodeButtonEnabled = true;
                 IsSaveDecodedButtonEnabled = false;
+                IsPreviewInBrowserEnabled = false;
                 IsDecodeResultVisible = false;
                 ShowcasedButton = "Decode";
 
@@ -409,6 +414,7 @@ namespace Base64Utils.ViewModels
                     DecodeResultInfo = resultInfo;
                     IsDecodeResultVisible = true;
                     IsSaveDecodedButtonEnabled = true;
+                    IsPreviewInBrowserEnabled = IsBrowserPreviewable(_detectedFileExtension);
                     UpdateStatusMessage($"Decoding complete. Decoded size: {_base64Service.FormatFileSize(result.ConvertedSize)}.");
                     ShowcasedButton = "SaveDecoded";
                 }
@@ -417,6 +423,7 @@ namespace Base64Utils.ViewModels
                     UpdateStatusMessage(result.ErrorMessage ?? "Unknown error occurred.", isError: true);
                     _decodedTemporaryFilePath = null;
                     IsSaveDecodedButtonEnabled = false;
+                    IsPreviewInBrowserEnabled = false;
                     IsDecodeResultVisible = false;
                     ShowcasedButton = "Decode";
                 }
@@ -482,6 +489,32 @@ namespace Base64Utils.ViewModels
         }
 
         [RelayCommand]
+        private void PreviewInBrowser()
+        {
+            if (string.IsNullOrEmpty(_decodedTemporaryFilePath))
+            {
+                UpdateStatusMessage("No decoded content available for preview.", isError: true);
+                return;
+            }
+
+            try
+            {
+                // Open the file in the default browser
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = _decodedTemporaryFilePath,
+                    UseShellExecute = true
+                };
+                System.Diagnostics.Process.Start(psi);
+                UpdateStatusMessage("Opening preview in browser...");
+            }
+            catch (Exception ex)
+            {
+                UpdateStatusMessage($"Error opening preview: {ex.Message}", isError: true);
+            }
+        }
+
+        [RelayCommand]
         private void ToggleStatusPopup()
         {
             if (CanExpandStatusMessage)
@@ -511,6 +544,27 @@ namespace Base64Utils.ViewModels
         #endregion
 
         #region Helper Methods
+
+        private bool IsBrowserPreviewable(string? extension)
+        {
+            if (string.IsNullOrEmpty(extension))
+                return false;
+
+            // List of file extensions that can be previewed in modern browsers
+            var previewableExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // Images
+                "png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "ico",
+                // Videos
+                "mp4", "webm", "ogg",
+                // Documents
+                "pdf", "html", "htm",
+                // Text
+                "txt", "json", "css", "js"
+            };
+
+            return previewableExtensions.Contains(extension);
+        }
 
         private void UpdateStatusMessage(string message, bool isError = false)
         {
