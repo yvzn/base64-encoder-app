@@ -16,7 +16,8 @@ namespace Base64Utils
             InitializeComponent();
 
             // Initialize services
-            var base64Service = new Base64Service();
+            var fileTypeDetectionService = new FileTypeDetectionService();
+            var base64Service = new Base64Service(fileTypeDetectionService);
             var fileService = new FileService();
 
             // Initialize ViewModel

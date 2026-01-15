@@ -8,6 +8,12 @@ namespace Base64Utils.Services
     public class Base64Service : IBase64Service
     {
         private const int PreviewLength = 100;
+        private readonly IFileTypeDetectionService _fileTypeDetectionService;
+
+        public Base64Service(IFileTypeDetectionService fileTypeDetectionService)
+        {
+            _fileTypeDetectionService = fileTypeDetectionService;
+        }
 
         public async Task<ConversionResult> EncodeFileAsync(string filePath)
         {
@@ -89,14 +95,21 @@ namespace Base64Utils.Services
                 // Read the Base64 content from the file
                 string base64Content = await File.ReadAllTextAsync(base64FilePath);
 
-                // Create a temporary file for the decoded content
-                string tempFilePath = Path.Combine(Path.GetTempPath(), $"decoded_{Guid.NewGuid()}.bin");
-
                 // Decode Base64 to binary
                 byte[] decodedBytes = Convert.FromBase64String(base64Content);
 
+                // Create a temporary file for the decoded content (without extension first)
+                string tempFilePathWithoutExt = Path.Combine(Path.GetTempPath(), $"decoded_{Guid.NewGuid()}");
+                
                 // Write the decoded binary content to the temporary file
-                await File.WriteAllBytesAsync(tempFilePath, decodedBytes);
+                await File.WriteAllBytesAsync(tempFilePathWithoutExt, decodedBytes);
+
+                // Detect file type
+                var (fileType, extension) = await _fileTypeDetectionService.DetectFileTypeAsync(tempFilePathWithoutExt);
+
+                // Rename the file with the proper extension
+                string tempFilePath = $"{tempFilePathWithoutExt}.{extension}";
+                File.Move(tempFilePathWithoutExt, tempFilePath);
 
                 var decodedFileSize = new FileInfo(tempFilePath).Length;
 
@@ -105,7 +118,9 @@ namespace Base64Utils.Services
                     IsSuccess = true,
                     OriginalSize = base64FileSize,
                     ConvertedSize = decodedFileSize,
-                    TemporaryFilePath = tempFilePath
+                    TemporaryFilePath = tempFilePath,
+                    FileType = fileType,
+                    FileExtension = extension
                 };
             }
             catch (Exception ex)

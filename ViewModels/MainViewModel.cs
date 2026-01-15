@@ -122,6 +122,8 @@ namespace Base64Utils.ViewModels
         private long _originalFileSize;
         private string? _decodedTemporaryFilePath;
         private string? _pastedBase64TemporaryFilePath;
+        private string? _detectedFileType;
+        private string? _detectedFileExtension;
 
         #endregion
 
@@ -392,8 +394,19 @@ namespace Base64Utils.ViewModels
                 if (result.IsSuccess)
                 {
                     _decodedTemporaryFilePath = result.TemporaryFilePath;
-                    DecodeResultInfo = $"Base64 input size: {_base64Service.FormatFileSize(result.OriginalSize)}\n" +
-                                      $"Decoded binary size: {_base64Service.FormatFileSize(result.ConvertedSize)}";
+                    _detectedFileType = result.FileType;
+                    _detectedFileExtension = result.FileExtension;
+                    
+                    // Build result info with file type if detected
+                    string resultInfo = $"Base64 input size: {_base64Service.FormatFileSize(result.OriginalSize)}\n" +
+                                       $"Decoded binary size: {_base64Service.FormatFileSize(result.ConvertedSize)}";
+                    
+                    if (!string.IsNullOrEmpty(result.FileType) && result.FileType != "Unknown")
+                    {
+                        resultInfo += $"\n\nDetected file type: {result.FileType} (most probably)";
+                    }
+                    
+                    DecodeResultInfo = resultInfo;
                     IsDecodeResultVisible = true;
                     IsSaveDecodedButtonEnabled = true;
                     UpdateStatusMessage($"Decoding complete. Decoded size: {_base64Service.FormatFileSize(result.ConvertedSize)}.");
@@ -428,10 +441,23 @@ namespace Base64Utils.ViewModels
                 return;
             }
 
+            // Determine suggested filename and filter based on detected file type
+            string suggestedFileName = "decoded_output";
+            string fileFilter = "All files (*.*)|*.*";
+            
+            if (!string.IsNullOrEmpty(_detectedFileExtension))
+            {
+                suggestedFileName = $"decoded_output.{_detectedFileExtension}";
+                
+                // Build a filter that prioritizes the detected type
+                string detectedTypeDesc = !string.IsNullOrEmpty(_detectedFileType) ? _detectedFileType : "Detected file";
+                fileFilter = $"{detectedTypeDesc} (*.{_detectedFileExtension})|*.{_detectedFileExtension}|All files (*.*)|*.*";
+            }
+
             var saveFilePath = _fileService.SaveFileDialog(
                 "Save Decoded Binary Content to File",
-                "All files (*.*)|*.*",
-                "decoded_output");
+                fileFilter,
+                suggestedFileName);
 
             if (!string.IsNullOrEmpty(saveFilePath))
             {

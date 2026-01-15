@@ -8,5 +8,7 @@ namespace Base64Utils.Models
         public long ConvertedSize { get; set; }
         public string? Preview { get; set; }
         public string? TemporaryFilePath { get; set; }
+        public string? FileType { get; set; }
+        public string? FileExtension { get; set; }
     }
 }
