@@ -514,12 +514,18 @@ Title="Base64 Converter" Height="600" Width="800">
                                     <DropShadowEffect BlurRadius="10" ShadowDepth="2" Opacity="0.3"/>
                                 </Border.Effect>
                                 <Grid>
-                                    <TextBlock x:Name="ExpandedMessageText"
-                                               Text="{Binding FullStatusMessage}"
-                                               TextWrapping="Wrap"
-                                               Foreground="#FF333333"
-                                               FontSize="14"
-                                               Margin="0,0,30,0"/>
+                                    <TextBox x:Name="ExpandedMessageText"
+                                             Text="{Binding FullStatusMessage}"
+                                             TextWrapping="Wrap"
+                                             Foreground="#FF333333"
+                                             FontSize="14"
+                                             Margin="0,0,30,0"
+                                             IsReadOnly="True"
+                                             BorderThickness="0"
+                                             Background="Transparent"
+                                             Cursor="IBeam"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Disabled"/>
                                     
                                     <Button x:Name="ClosePopupButton"
                                             Content="✕"
