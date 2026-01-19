@@ -198,7 +198,7 @@ namespace Base64Utils.ViewModels
                 }
                 else
                 {
-                    UpdateStatusMessage(result.ErrorMessage ?? "Unknown error occurred.", isError: true);
+                    UpdateStatusMessage(result.ErrorMessage ?? "Unknown error occurred. Please check the inputs and try again.", isError: true);
                     _originalFileSize = 0;
                     IsCopyButtonEnabled = false;
                     IsSaveToFileButtonEnabled = false;
@@ -208,7 +208,7 @@ namespace Base64Utils.ViewModels
             }
             catch (Exception ex)
             {
-                UpdateStatusMessage($"Error: {ex.Message}", isError: true);
+                UpdateStatusMessage($"Error encoding to Base64, please check the inputs and try again: {ex.Message}", isError: true);
             }
             finally
             {
@@ -238,7 +238,7 @@ namespace Base64Utils.ViewModels
             }
             catch (Exception ex)
             {
-                UpdateStatusMessage($"Error copying to clipboard: {ex.Message}", isError: true);
+                UpdateStatusMessage($"Error copying to clipboard, please try again: {ex.Message}", isError: true);
             }
         }
 
@@ -270,7 +270,7 @@ namespace Base64Utils.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    UpdateStatusMessage($"Error saving to file: {ex.Message}", isError: true);
+                    UpdateStatusMessage($"Error saving to file, please check the file path and try again: {ex.Message}", isError: true);
                 }
             }
         }
@@ -321,7 +321,7 @@ namespace Base64Utils.ViewModels
 
                 if (!_base64Service.IsValidBase64(clipboardContent))
                 {
-                    UpdateStatusMessage("Clipboard content does not appear to be valid Base64.", isError: true);
+                    UpdateStatusMessage("Clipboard content does not appear to be valid Base64. Please check the content and try again.", isError: true);
                     return;
                 }
 
@@ -358,7 +358,7 @@ namespace Base64Utils.ViewModels
             }
             catch (Exception ex)
             {
-                UpdateStatusMessage($"Error pasting from clipboard: {ex.Message}", isError: true);
+                UpdateStatusMessage($"Error pasting from clipboard, please try again: {ex.Message}", isError: true);
             }
         }
 
@@ -417,7 +417,7 @@ namespace Base64Utils.ViewModels
                 }
                 else
                 {
-                    UpdateStatusMessage(result.ErrorMessage ?? "Unknown error occurred.", isError: true);
+                    UpdateStatusMessage(result.ErrorMessage ?? "Unknown error occurred. Please check the inputs and try again.", isError: true);
                     _decodedTemporaryFilePath = null;
                     IsSaveDecodedButtonEnabled = false;
                     IsPreviewInBrowserEnabled = false;
@@ -427,7 +427,7 @@ namespace Base64Utils.ViewModels
             }
             catch (Exception ex)
             {
-                UpdateStatusMessage($"Error: {ex.Message}", isError: true);
+                UpdateStatusMessage($"Error decoding from Base64, please check the inputs and try again: {ex.Message}", isError: true);
             }
             finally
             {
@@ -479,7 +479,7 @@ namespace Base64Utils.ViewModels
                 }
                 catch (Exception ex)
                 {
-                    UpdateStatusMessage($"Error saving to file: {ex.Message}", isError: true);
+                    UpdateStatusMessage($"Error saving to file, please check the file path and try again: {ex.Message}", isError: true);
                 }
             }
         }
@@ -489,7 +489,7 @@ namespace Base64Utils.ViewModels
         {
             if (string.IsNullOrEmpty(_decodedTemporaryFilePath))
             {
-                UpdateStatusMessage("No decoded content available for preview.", isError: true);
+                UpdateStatusMessage("No decoded content available for preview. Please decode a file first.", isError: true);
                 return;
             }
 
@@ -506,7 +506,7 @@ namespace Base64Utils.ViewModels
             }
             catch (Exception ex)
             {
-                UpdateStatusMessage($"Error opening preview: {ex.Message}", isError: true);
+                UpdateStatusMessage($"Error opening preview, please check the file and try again: {ex.Message}", isError: true);
             }
         }
 

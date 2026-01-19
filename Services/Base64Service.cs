@@ -26,7 +26,7 @@ namespace Base64Utils.Services
                     return new ConversionResult
                     {
                         IsSuccess = false,
-                        ErrorMessage = "File does not exist."
+                        ErrorMessage = "File does not exist. Please check the path and try again."
                     };
                 }
 
@@ -61,7 +61,7 @@ namespace Base64Utils.Services
                 return new ConversionResult
                 {
                     IsSuccess = false,
-                    ErrorMessage = $"Error converting file: {ex.Message}"
+                    ErrorMessage = $"Error converting file, please check the file content and access permissions and try again: {ex.Message}"
                 };
             }
         }
@@ -87,7 +87,7 @@ namespace Base64Utils.Services
                     return new ConversionResult
                     {
                         IsSuccess = false,
-                        ErrorMessage = "File does not exist."
+                        ErrorMessage = "File does not exist. Please check the path and try again."
                     };
                 }
 
@@ -133,7 +133,7 @@ namespace Base64Utils.Services
                 return new ConversionResult
                 {
                     IsSuccess = false,
-                    ErrorMessage = $"Error decoding: {ex.Message}"
+                    ErrorMessage = $"Error decoding from Base64, please check the inputs and try again: {ex.Message}"
                 };
             }
         }
