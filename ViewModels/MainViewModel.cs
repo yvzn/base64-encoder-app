@@ -16,7 +16,7 @@ namespace Base64Utils.ViewModels
         // Brushes for different modes
         private static readonly SolidColorBrush EncodeAccentBrush = new SolidColorBrush(Color.FromRgb(64, 162, 227));
         private static readonly SolidColorBrush DecodeAccentBrush = new SolidColorBrush(Color.FromRgb(13, 146, 118));
-        private static readonly SolidColorBrush ErrorBrush = new SolidColorBrush(Color.FromRgb(204, 0, 0));
+        private static readonly SolidColorBrush ErrorBrush = new SolidColorBrush(Color.FromRgb(147, 3, 46));
         private static readonly SolidColorBrush NeutralBrush = new SolidColorBrush(Color.FromRgb(51, 51, 51));
 
         public MainViewModel(IBase64Service base64Service, IFileService fileService)
@@ -57,6 +57,12 @@ namespace Base64Utils.ViewModels
         private string _encodePreview = string.Empty;
 
         [ObservableProperty]
+        private bool _isEncodeErrorVisible;
+
+        [ObservableProperty]
+        private string _encodeErrorMessage = string.Empty;
+
+        [ObservableProperty]
         private string? _selectedBase64FilePath;
 
         [ObservableProperty]
@@ -76,6 +82,12 @@ namespace Base64Utils.ViewModels
 
         [ObservableProperty]
         private string _decodeResultInfo = string.Empty;
+
+        [ObservableProperty]
+        private bool _isDecodeErrorVisible;
+
+        [ObservableProperty]
+        private string _decodeErrorMessage = string.Empty;
 
         [ObservableProperty]
         private string _base64PastePreview = string.Empty;
@@ -145,6 +157,7 @@ namespace Base64Utils.ViewModels
                 FileNameDisplay = $"Selected file: {Path.GetFileName(filePath)}";
                 IsConvertButtonEnabled = true;
                 IsEncodeResultVisible = false;
+                IsEncodeErrorVisible = false;
                 IsCopyButtonEnabled = false;
                 IsSaveToFileButtonEnabled = false;
                 _originalFileSize = 0;
@@ -156,6 +169,7 @@ namespace Base64Utils.ViewModels
                 FileNameDisplay = "No file selected.";
                 IsConvertButtonEnabled = false;
                 IsEncodeResultVisible = false;
+                IsEncodeErrorVisible = false;
                 IsCopyButtonEnabled = false;
                 IsSaveToFileButtonEnabled = false;
                 _originalFileSize = 0;
@@ -178,6 +192,7 @@ namespace Base64Utils.ViewModels
             IsCopyButtonEnabled = false;
             IsSaveToFileButtonEnabled = false;
             IsEncodeResultVisible = false;
+            IsEncodeErrorVisible = false;
             ShowcasedButton = null;
 
             try
@@ -191,6 +206,7 @@ namespace Base64Utils.ViewModels
                                       $"Base64 output size: {result.ConvertedSize:N0} characters";
                     EncodePreview = result.Preview ?? string.Empty;
                     IsEncodeResultVisible = true;
+                    IsEncodeErrorVisible = false;
                     IsCopyButtonEnabled = true;
                     IsSaveToFileButtonEnabled = true;
                     UpdateStatusMessage($"Conversion complete. Generated {result.ConvertedSize:N0} characters.");
@@ -198,16 +214,21 @@ namespace Base64Utils.ViewModels
                 }
                 else
                 {
+                    EncodeErrorMessage = result.ErrorMessage ?? "Unknown error occurred. Please check the inputs and try again.";
                     UpdateStatusMessage(result.ErrorMessage ?? "Unknown error occurred. Please check the inputs and try again.", isError: true);
                     _originalFileSize = 0;
                     IsCopyButtonEnabled = false;
                     IsSaveToFileButtonEnabled = false;
                     IsEncodeResultVisible = false;
+                    IsEncodeErrorVisible = true;
                     ShowcasedButton = "Convert";
                 }
             }
             catch (Exception ex)
             {
+                EncodeErrorMessage = $"Error encoding to Base64: {ex.Message}";
+                IsEncodeResultVisible = false;
+                IsEncodeErrorVisible = true;
                 UpdateStatusMessage($"Error encoding to Base64, please check the inputs and try again: {ex.Message}", isError: true);
             }
             finally
@@ -290,6 +311,7 @@ namespace Base64Utils.ViewModels
                 IsSaveDecodedButtonEnabled = false;
                 IsPreviewInBrowserEnabled = false;
                 IsDecodeResultVisible = false;
+                IsDecodeErrorVisible = false;
                 ShowcasedButton = "Decode";
 
                 // Clear paste area when file is selected
@@ -302,6 +324,7 @@ namespace Base64Utils.ViewModels
                 IsDecodeButtonEnabled = false;
                 IsSaveDecodedButtonEnabled = false;
                 IsDecodeResultVisible = false;
+                IsDecodeErrorVisible = false;
                 ShowcasedButton = "SelectBase64File";
             }
         }
@@ -315,12 +338,18 @@ namespace Base64Utils.ViewModels
 
                 if (string.IsNullOrWhiteSpace(clipboardContent))
                 {
+                    DecodeErrorMessage = "Clipboard is empty. Please copy a Base64 string first.";
+                    IsDecodeErrorVisible = true;
+                    IsDecodeResultVisible = false;
                     UpdateStatusMessage("Clipboard is empty. Please copy a Base64 string first.", isError: true);
                     return;
                 }
 
                 if (!_base64Service.IsValidBase64(clipboardContent))
                 {
+                    DecodeErrorMessage = "Clipboard content does not appear to be valid Base64. Please check the content and try again.";
+                    IsDecodeErrorVisible = true;
+                    IsDecodeResultVisible = false;
                     UpdateStatusMessage("Clipboard content does not appear to be valid Base64. Please check the content and try again.", isError: true);
                     return;
                 }
@@ -345,6 +374,7 @@ namespace Base64Utils.ViewModels
                 IsSaveDecodedButtonEnabled = false;
                 IsPreviewInBrowserEnabled = false;
                 IsDecodeResultVisible = false;
+                IsDecodeErrorVisible = false;
                 ShowcasedButton = "Decode";
 
                 UpdateStatusMessage("Base64 string pasted from clipboard successfully.");
@@ -387,6 +417,7 @@ namespace Base64Utils.ViewModels
             IsDecodeButtonEnabled = false;
             IsSaveDecodedButtonEnabled = false;
             IsDecodeResultVisible = false;
+            IsDecodeErrorVisible = false;
             ShowcasedButton = null;
 
             try
@@ -410,6 +441,7 @@ namespace Base64Utils.ViewModels
                     
                     DecodeResultInfo = resultInfo;
                     IsDecodeResultVisible = true;
+                    IsDecodeErrorVisible = false;
                     IsSaveDecodedButtonEnabled = true;
                     IsPreviewInBrowserEnabled = IsBrowserPreviewable(_detectedFileExtension);
                     UpdateStatusMessage($"Decoding complete. Decoded size: {_base64Service.FormatFileSize(result.ConvertedSize)}.");
@@ -417,16 +449,21 @@ namespace Base64Utils.ViewModels
                 }
                 else
                 {
+                    DecodeErrorMessage = result.ErrorMessage ?? "Unknown error occurred. Please check the inputs and try again.";
                     UpdateStatusMessage(result.ErrorMessage ?? "Unknown error occurred. Please check the inputs and try again.", isError: true);
                     _decodedTemporaryFilePath = null;
                     IsSaveDecodedButtonEnabled = false;
                     IsPreviewInBrowserEnabled = false;
                     IsDecodeResultVisible = false;
+                    IsDecodeErrorVisible = true;
                     ShowcasedButton = "Decode";
                 }
             }
             catch (Exception ex)
             {
+                DecodeErrorMessage = $"Error decoding from Base64: {ex.Message}";
+                IsDecodeResultVisible = false;
+                IsDecodeErrorVisible = true;
                 UpdateStatusMessage($"Error decoding from Base64, please check the inputs and try again: {ex.Message}", isError: true);
             }
             finally
@@ -584,6 +621,17 @@ namespace Base64Utils.ViewModels
 
             StatusMessage = displayMessage;
             StatusForeground = isError ? ErrorBrush : NeutralBrush;
+
+            // Update accent brush based on error state
+            if (isError)
+            {
+                AccentBrush = ErrorBrush;
+            }
+            else
+            {
+                // Revert to mode-specific accent color
+                AccentBrush = CurrentMode == AppMode.Encode ? EncodeAccentBrush : DecodeAccentBrush;
+            }
 
             // Auto-focus status bar when error occurs
             if (isError)
