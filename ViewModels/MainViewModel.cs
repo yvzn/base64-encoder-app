@@ -16,7 +16,7 @@ namespace Base64Utils.ViewModels
         // Brushes for different modes
         private static readonly SolidColorBrush EncodeAccentBrush = new SolidColorBrush(Color.FromRgb(64, 162, 227));
         private static readonly SolidColorBrush DecodeAccentBrush = new SolidColorBrush(Color.FromRgb(13, 146, 118));
-        private static readonly SolidColorBrush ErrorBrush = new SolidColorBrush(Color.FromRgb(147, 3, 46));
+        private static readonly SolidColorBrush ErrorBrush = new SolidColorBrush(Color.FromRgb(249, 57, 67));
         private static readonly SolidColorBrush NeutralBrush = new SolidColorBrush(Color.FromRgb(51, 51, 51));
 
         public MainViewModel(IBase64Service base64Service, IFileService fileService)

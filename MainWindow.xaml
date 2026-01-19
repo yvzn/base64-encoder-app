@@ -20,7 +20,7 @@ Title="Base64 Converter" Height="600" Width="800">
         <!-- https://colorhunt.co/palette/40a2e3fff6e9bbe2ec0d9276 -->
         <Color x:Key="EncodeAccentColor">#40A2E3</Color>
         <Color x:Key="DecodeAccentColor">#0D9276</Color>
-        <Color x:Key="ErrorAccentColor">#93032E</Color>
+        <Color x:Key="ErrorAccentColor">#F93943</Color>
         <SolidColorBrush x:Key="EncodeAccentBrush" Color="{StaticResource EncodeAccentColor}"/>
         <SolidColorBrush x:Key="DecodeAccentBrush" Color="{StaticResource DecodeAccentColor}"/>
         <SolidColorBrush x:Key="ErrorAccentBrush" Color="{StaticResource ErrorAccentColor}"/>
