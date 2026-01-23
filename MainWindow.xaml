@@ -23,9 +23,11 @@ Icon="/Assets/favicon.ico"
         <Color x:Key="EncodeAccentColor">#40A2E3</Color>
         <Color x:Key="DecodeAccentColor">#0D9276</Color>
         <Color x:Key="ErrorAccentColor">#F93943</Color>
+        <Color x:Key="AboutAccentColor">#662C91</Color>
         <SolidColorBrush x:Key="EncodeAccentBrush" Color="{StaticResource EncodeAccentColor}"/>
         <SolidColorBrush x:Key="DecodeAccentBrush" Color="{StaticResource DecodeAccentColor}"/>
         <SolidColorBrush x:Key="ErrorAccentBrush" Color="{StaticResource ErrorAccentColor}"/>
+        <SolidColorBrush x:Key="AboutAccentBrush" Color="{StaticResource AboutAccentColor}"/>
         
         
         <!-- Enhanced focus visual style for better visibility -->
@@ -523,6 +525,85 @@ Icon="/Assets/favicon.ico"
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem x:Name="AboutTab" FocusManager.FocusedElement="{Binding ElementName=AboutAppIcon}">
+                <TabItem.Header>
+                    <StackPanel>
+                        <Rectangle Height="4" Fill="{StaticResource AboutAccentBrush}" RadiusX="0" RadiusY="0"/>
+                        <TextBlock Text="About" FontSize="14" Margin="0,6,0,0" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" Width="600" Margin="20">
+                        <!-- Application Icon -->
+                        <Image x:Name="AboutAppIcon"
+                               Source="/Assets/favicon.ico" 
+                               Width="96" 
+                               Height="96" 
+                               Margin="0,20,0,20"
+                               HorizontalAlignment="Center"
+                               Focusable="True"/>
+                        
+                        <!-- Application Name -->
+                        <TextBlock Text="Base64 Converter" 
+                                   FontSize="32" 
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,10"
+                                   Foreground="{StaticResource AboutAccentBrush}"/>
+                        
+                        <TextBlock Text="{Binding Version}" 
+                                   FontSize="14" 
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,30"
+                                   Foreground="#FF666666"/>
+                        
+                        <!-- Author -->
+                        <StackPanel Margin="0,20,0,20">
+                            <TextBlock Text="Author" 
+                                       FontSize="16" 
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8"
+                                       Foreground="{StaticResource AboutAccentBrush}"/>
+                            <TextBlock Text="Yvan Razafindramanana" 
+                                       FontSize="14"
+                                       HorizontalAlignment="Left"
+                                       Margin="0,0,0,5"/>
+                        </StackPanel>
+                        
+                        <!-- Copyright and License -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="License" 
+                                       FontSize="16" 
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8"
+                                       Foreground="{StaticResource AboutAccentBrush}"/>
+                            <TextBlock Text="{Binding LicenseText}"
+                                       TextWrapping="Wrap"
+                                       FontSize="12"
+                                       Foreground="#FF666666"
+                                       Margin="0,0,0,0"/>
+                        </StackPanel>
+                        
+                        <!-- GitHub Repository -->
+                        <StackPanel Margin="0,0,0,20">
+                            <TextBlock Text="Repository" 
+                                       FontSize="16" 
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,8"
+                                       Foreground="{StaticResource AboutAccentBrush}"/>
+                            <TextBlock HorizontalAlignment="Left">
+                                <Hyperlink Command="{Binding OpenUrlCommand}"
+                                           CommandParameter="https://github.com/yvzn/Base64Utils"
+                                           Foreground="{StaticResource AboutAccentBrush}">
+                                    <TextBlock Text="https://github.com/yvzn/Base64Utils" 
+                                               FontSize="14"/>
+                                </Hyperlink>
+                            </TextBlock>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

@@ -19,4 +19,8 @@
 		<Resource Include="Assets\favicon.ico" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Include="LICENSE" />
+	</ItemGroup>
+
 </Project>

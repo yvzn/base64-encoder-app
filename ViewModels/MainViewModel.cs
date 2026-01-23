@@ -25,6 +25,8 @@ namespace Base64Utils.ViewModels
             _fileService = fileService;
             UpdateStatusMessage("Ready in Encode mode.");
             ShowcasedButton = "SelectFile";
+            LoadLicenseText();
+            LoadVersion();
         }
 
         #region Observable Properties
@@ -133,6 +135,12 @@ namespace Base64Utils.ViewModels
 
         [ObservableProperty]
         private string _saveDecodedButtonText = "Save to File";
+
+        [ObservableProperty]
+        private string _licenseText = string.Empty;
+
+        [ObservableProperty]
+        private string _version = string.Empty;
 
         private long _originalFileSize;
         private string? _decodedTemporaryFilePath;
@@ -562,6 +570,23 @@ namespace Base64Utils.ViewModels
             IsStatusPopupOpen = false;
         }
 
+        [RelayCommand]
+        private void OpenUrl(string url)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                UpdateStatusMessage($"Failed to open link: {ex.Message}", isError: true);
+            }
+        }
+
         #endregion
 
         #region Mode Change
@@ -656,6 +681,44 @@ namespace Base64Utils.ViewModels
             {
                 _fileService.DeleteFile(_pastedBase64TemporaryFilePath);
                 _pastedBase64TemporaryFilePath = null;
+            }
+        }
+
+        private void LoadLicenseText()
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var resourceName = "Base64Utils.LICENSE";
+                
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                if (stream != null)
+                {
+                    using var reader = new StreamReader(stream);
+                    LicenseText = reader.ReadToEnd();
+                }
+                else
+                {
+                    LicenseText = "License file not found.";
+                }
+            }
+            catch
+            {
+                LicenseText = "Error loading license file.";
+            }
+        }
+
+        private void LoadVersion()
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var version = assembly.GetName().Version;
+                Version = version != null ? $"Version {version.Major}.{version.Minor}" : "Version 1.0";
+            }
+            catch
+            {
+                Version = "Version 1.0";
             }
         }
 
