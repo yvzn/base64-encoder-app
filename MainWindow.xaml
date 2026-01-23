@@ -7,10 +7,12 @@ xmlns:local="clr-namespace:Base64Utils"
 xmlns:converters="clr-namespace:Base64Utils.Converters"
 xmlns:behaviors="clr-namespace:Base64Utils.Behaviors"
 mc:Ignorable="d"
-Title="Base64 Converter" Height="600" Width="800">
+Title="Base64 Converter" Height="600" Width="800"
+Icon="/Assets/favicon.ico"
+>
     <Window.Resources>
         <!-- Font Family -->
-        <FontFamily x:Key="MainFont">fonts/#Atkinson Hyperlegible Next</FontFamily>
+        <FontFamily x:Key="MainFont">Assets/#Atkinson Hyperlegible Next</FontFamily>
         
         <!-- Converters -->
         <converters:BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>

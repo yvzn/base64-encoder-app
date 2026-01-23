@@ -15,7 +15,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Resource Include="fonts\AtkinsonHyperlegibleNext-Regular.ttf" />
+		<Resource Include="Assets\AtkinsonHyperlegibleNext-Regular.ttf" />
+		<Resource Include="Assets\favicon.ico" />
 	</ItemGroup>
 
 </Project>
